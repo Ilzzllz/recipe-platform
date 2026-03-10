@@ -7,9 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class RecipeMapper {
     public RecipeDto toDto(Recipe recipe) {
-        RecipeDto dto = new RecipeDto();
-        dto.setTitle(recipe.getTitle());
-        dto.setDescription(recipe.getDescription());
-        return dto;
+        if (recipe == null) {
+            return null;
+        }
+        return new RecipeDto(
+                recipe.getTitle(),
+                recipe.getDescription(),
+                recipe.getCategory()
+        );
     }
 }
