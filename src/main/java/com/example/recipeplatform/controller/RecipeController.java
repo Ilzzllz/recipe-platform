@@ -17,15 +17,14 @@ import java.util.List;
 public class RecipeController {
     private final RecipeService recipeService;
 
-    // Пункт 3: @PathVariable -> http://localhost:8080/api/recipes/1
     @GetMapping("/{id}")
     public RecipeDto getById(@PathVariable Long id) {
         return recipeService.getById(id);
     }
 
-    // Пункт 3: @RequestParam -> http://localhost:8080/api/recipes/search?title=Борщ
     @GetMapping("/search")
     public List<RecipeDto> getByTitle(@RequestParam String title) {
+
         return recipeService.searchByTitle(title);
     }
 }

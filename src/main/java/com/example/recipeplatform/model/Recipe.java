@@ -11,5 +11,5 @@ public class Recipe {
     private Long id;
     private String title;
     private String description;
-    private String category; // Например: Суп, Десерт
+    private String category;
 }
