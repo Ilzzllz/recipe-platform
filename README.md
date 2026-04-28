@@ -224,10 +224,6 @@ erDiagram
 RUN_DB_TESTS=true ./mvnw test
 ```
 
-## Дополнительные материалы
-
-Подробный отчёт по лабораторной находится в [LAB2_REPORT.md](./LAB2_REPORT.md).
-
 ## SonarCloud
 
 [recipe-platform on SonarCloud](https://sonarcloud.io/project/overview?id=Ilzzllz_recipe-platform)
