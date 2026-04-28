@@ -1,46 +1,235 @@
 # Recipe Platform API
 
-Recipe Platform — это учебное REST API приложение на базе Spring Boot, предназначенное для управления и обмена кулинарными рецептами. Проект создан в рамках первой лабораторной работы для демонстрации навыков построения многослойной архитектуры и работы с HTTP-запросами.
+`Recipe Platform` — учебное REST API на Spring Boot для платформы обмена рецептами. Проект выполнен в рамках второй лабораторной работы и демонстрирует работу с реляционной базой данных, JPA-сущностями, CRUD-операциями, транзакциями и оптимизацией загрузки связанных данных.
 
-## Стек технологий
+## Соответствие требованиям лабораторной работы
 
-Проект использует современный стек разработки на Java:
+Проект закрывает все пункты ТЗ:
 
-* Java 17 или 21 — основная платформа.
-* Spring Boot 3 — фреймворк для создания веб-приложения.
-* Lombok — библиотека для минимизации шаблонного кода.
-* Maven — инструмент автоматизации сборки.
-* Checkstyle — модуль для автоматической проверки стиля кода на соответствие стандартам.
+1. Подключена реляционная БД `PostgreSQL`.
+2. В модели данных реализовано 5 сущностей.
+3. Реализованы CRUD-операции.
+4. Настроены и обоснованы `CascadeType` и `FetchType`.
+5. Продемонстрирована проблема `N+1` и её решение через `fetch join`.
+6. Реализовано сохранение нескольких связанных сущностей с показом частичного сохранения без `@Transactional` и полного отката с `@Transactional`.
+7. Добавлена ER-диаграмма с `PK/FK` и связями.
 
-## Использование API
+## Технологический стек
 
-Приложение предоставляет доступ к данным через стандартные HTTP-методы. Для тестирования можно использовать браузер или Postman.
+* `Java 21`
+* `Spring Boot 3`
+* `Spring Web`
+* `Spring Data JPA`
+* `PostgreSQL`
+* `Lombok`
+* `Maven`
+* `JUnit 5`
 
-### Получение рецепта по идентификатору
+## Архитектура проекта
 
-Используется аннотация PathVariable. Для получения данных отправьте запрос на адрес /api/recipes/1, где 1 — это уникальный номер рецепта в базе.
+Проект построен по многослойной архитектуре:
 
-### Поиск рецептов
+* `controller` — обработка HTTP-запросов.
+* `service` — бизнес-логика и сценарии для демонстрации требований лабораторной.
+* `repository` — доступ к данным через Spring Data JPA.
+* `model` — сущности базы данных.
+* `dto` — объекты передачи данных.
+* `mapper` — преобразование сущностей в DTO.
+* `exception` — централизованная обработка ошибок.
 
-Используется аннотация RequestParam. Для фильтрации или поиска отправьте запрос на адрес /api/recipes/search с параметром title, например: /api/recipes/search?title=Борщ.
+## Модель данных
 
-## Архитектура приложения
+В проекте используются сущности:
 
-Проект организован по классической схеме разделения ответственности:
+1. `User`
+2. `Recipe`
+3. `Category`
+4. `Ingredient`
+5. `CookingStep`
 
-* Слой Controller — обрабатывает входящие HTTP-запросы и возвращает ответы пользователю.
-* Слой Service — содержит бизнес-логику приложения и отвечает за преобразование данных.
-* Слой Repository — имитирует хранилище данных, используя коллекции в оперативной памяти.
-* DTO и Mapper — обеспечивают безопасную передачу данных, скрывая внутреннюю структуру сущностей от конечного пользователя.
+Реализованные связи:
 
-## Контроль качества кода
+* `User` -> `Recipe` — `OneToMany`
+* `Category` -> `Recipe` — `OneToMany`
+* `Recipe` -> `CookingStep` — `OneToMany`
+* `Recipe` <-> `Ingredient` — `ManyToMany`
 
-Для соблюдения чистоты кода в проект интегрирован Checkstyle.
+## Обоснование CascadeType и FetchType
 
-## Лицензия
+Для ассоциаций в проекте по умолчанию используется `FetchType.LAZY`. Это позволяет:
 
-Проект распространяется под лицензией MIT.
+* не загружать весь граф объектов без необходимости;
+* уменьшить количество лишних данных в типичных запросах;
+* наглядно показать проблему `N+1`.
 
-## SonarCLoud
+Для связи `Recipe -> CookingStep` настроены `CascadeType.ALL` и `orphanRemoval = true`, потому что:
 
-https://sonarcloud.io/project/overview?id=Ilzzllz_recipe-platform
+* шаги приготовления принадлежат только одному рецепту;
+* шаг не имеет самостоятельного жизненного цикла вне рецепта;
+* при обновлении или удалении рецепта связанные шаги должны меняться вместе с ним.
+
+Для `User`, `Category` и `Ingredient` каскадное удаление не используется, потому что эти сущности независимы и могут использоваться в нескольких местах.
+
+## CRUD API
+
+### Рецепты
+
+* `GET /api/recipes`
+* `GET /api/recipes/{id}`
+* `GET /api/recipes/search?title=...`
+* `POST /api/recipes`
+* `PUT /api/recipes/{id}`
+* `DELETE /api/recipes/{id}`
+
+### Пользователи
+
+* `GET /api/users`
+* `GET /api/users/{id}`
+* `POST /api/users`
+* `PUT /api/users/{id}`
+* `DELETE /api/users/{id}`
+
+### Категории
+
+* `GET /api/categories`
+* `GET /api/categories/{id}`
+* `POST /api/categories`
+* `PUT /api/categories/{id}`
+* `DELETE /api/categories/{id}`
+
+### Ингредиенты
+
+* `GET /api/ingredients`
+* `GET /api/ingredients/{id}`
+* `POST /api/ingredients`
+* `PUT /api/ingredients/{id}`
+* `DELETE /api/ingredients/{id}`
+
+### Шаги приготовления
+
+* `GET /api/steps`
+* `GET /api/steps/{id}`
+* `POST /api/steps`
+* `PUT /api/steps/{id}`
+* `DELETE /api/steps/{id}`
+
+## Демонстрация проблемы N+1
+
+Для лабораторной добавлены специальные эндпоинты:
+
+* `GET /api/lab/n-plus-one/problem` — сценарий с проблемой `N+1`
+* `GET /api/lab/n-plus-one/solution` — сценарий с её решением через `fetch join`
+
+В ответе возвращается количество SQL-запросов, чтобы можно было сравнить поведение до и после оптимизации.
+
+## Демонстрация @Transactional
+
+Для показа работы транзакций доступны два эндпоинта:
+
+* `POST /api/lab/transactions/without-transactional`
+* `POST /api/lab/transactions/with-transactional`
+
+Что показывается:
+
+* без `@Transactional` часть данных успевает сохраниться до возникновения ошибки;
+* с `@Transactional` операция полностью откатывается.
+
+## ER-диаграмма
+
+```mermaid
+erDiagram
+    USERS ||--o{ RECIPES : "author_id"
+    CATEGORIES ||--o{ RECIPES : "category_id"
+    RECIPES ||--o{ COOKING_STEPS : "recipe_id"
+    RECIPES o{--o{ INGREDIENTS : "recipe_ingredients"
+
+    USERS {
+        BIGINT id PK
+        VARCHAR username
+        VARCHAR email
+        TEXT bio
+    }
+
+    CATEGORIES {
+        BIGINT id PK
+        VARCHAR name
+        TEXT description
+    }
+
+    INGREDIENTS {
+        BIGINT id PK
+        VARCHAR name
+    }
+
+    RECIPES {
+        BIGINT id PK
+        VARCHAR title
+        TEXT description
+        BIGINT author_id FK
+        BIGINT category_id FK
+    }
+
+    COOKING_STEPS {
+        BIGINT id PK
+        INTEGER step_order
+        TEXT description
+        BIGINT recipe_id FK
+    }
+
+    RECIPE_INGREDIENTS {
+        BIGINT recipe_id FK
+        BIGINT ingredient_id FK
+    }
+```
+
+## Запуск проекта
+
+### Требования
+
+Для запуска нужны:
+
+* `JDK 21`
+* `PostgreSQL`
+* `Maven` или Maven Wrapper
+
+### Настройки подключения
+
+По умолчанию используются параметры:
+
+* `DB_URL=jdbc:postgresql://localhost:5432/recipe_db`
+* `DB_USERNAME=postgres`
+* `DB_PASSWORD=07Omemeg`
+
+Их можно оставить как есть или переопределить через переменные окружения.
+
+### Запуск
+
+1. Создать базу данных `recipe_db`.
+2. Убедиться, что PostgreSQL запущен.
+3. Запустить приложение:
+
+```bash
+./mvnw spring-boot:run
+```
+
+### Тесты
+
+Запуск тестов:
+
+```bash
+./mvnw test
+```
+
+Если нужен именно интеграционный старт контекста с реальной БД, можно включить:
+
+```bash
+RUN_DB_TESTS=true ./mvnw test
+```
+
+## Дополнительные материалы
+
+Подробный отчёт по лабораторной находится в [LAB2_REPORT.md](./LAB2_REPORT.md).
+
+## SonarCloud
+
+[recipe-platform on SonarCloud](https://sonarcloud.io/project/overview?id=Ilzzllz_recipe-platform)
