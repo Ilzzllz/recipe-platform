@@ -2,7 +2,11 @@ package com.example.recipeplatform.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class StepRequest {
 
     @NotNull
@@ -10,20 +14,4 @@ public class StepRequest {
 
     @NotBlank
     private String description;
-
-    public Integer getStepOrder() {
-        return stepOrder;
-    }
-
-    public void setStepOrder(Integer stepOrder) {
-        this.stepOrder = stepOrder;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }
