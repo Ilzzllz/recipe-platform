@@ -1,23 +1,75 @@
 package com.example.recipeplatform.repository;
 
 import com.example.recipeplatform.model.Recipe;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public class RecipeRepository {
+public interface RecipeRepository extends JpaRepository<Recipe, Long> {
+    /*
+    // Используем паттерн Builder для создания объектов
     private final List<Recipe> recipes = List.of(
-            new Recipe(1L, "Борщ", "Классический суп", "Супы"),
-            new Recipe(2L, "Плов", "Узбекский плов с говядиной", "Горячее"),
-            new Recipe(3L, "Тирамису", "Кофейный десерт", "Десерты")
+            Recipe.builder()
+                    .id(1L)
+                    .title("Борщ")
+                    .description("Классический суп")
+                    .build(),
+            Recipe.builder()
+                    .id(2L)
+                    .title("Плов")
+                    .description("Узбекский плов с говядиной")
+                    .build(),
+            Recipe.builder()
+                    .id(3L)
+                    .title("Тирамису")
+                    .description("Кофейный десерт")
+                    .build()
     );
 
     public Optional<Recipe> findById(Long id) {
-        return recipes.stream().filter(r -> r.getId().equals(id)).findFirst();
+        return recipes.stream()
+                .filter(r -> r.getId().equals(id))
+                .findFirst();
     }
 
     public List<Recipe> findAll() {
         return recipes;
     }
+    */
+
+    @Query("""
+            select distinct r from Recipe r
+            left join fetch r.author
+            left join fetch r.category
+            left join fetch r.ingredients
+            left join fetch r.steps
+            order by r.id
+            """)
+    List<Recipe> findAllWithDetails();
+
+    @Query("""
+            select distinct r from Recipe r
+            left join fetch r.author
+            left join fetch r.category
+            left join fetch r.ingredients
+            left join fetch r.steps
+            where r.id = :id
+            """)
+    Optional<Recipe> findDetailedById(@Param("id") Long id);
+
+    @Query("""
+            select distinct r from Recipe r
+            left join fetch r.author
+            left join fetch r.category
+            left join fetch r.ingredients
+            left join fetch r.steps
+            where lower(r.title) like lower(concat('%', :title, '%'))
+            order by r.id
+            """)
+    List<Recipe> searchWithDetails(@Param("title") String title);
+
+    long countByTitleStartingWith(String prefix);
 }
