@@ -23,6 +23,11 @@ import java.util.List;
 @Service
 public class RecipeService {
 
+    private static final String RECIPE_WITH_ID_PREFIX = "Recipe with id ";
+    private static final String USER_WITH_ID_PREFIX = "User with id ";
+    private static final String CATEGORY_WITH_ID_PREFIX = "Category with id ";
+    private static final String NOT_FOUND_SUFFIX = " was not found";
+
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -73,20 +78,20 @@ public class RecipeService {
     @Transactional
     public void delete(Long id) {
         Recipe recipe = recipeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Recipe with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
         recipeRepository.delete(recipe);
     }
 
     private Recipe findDetailedRecipe(Long id) {
         return recipeRepository.findDetailedById(id)
-                .orElseThrow(() -> new NotFoundException("Recipe with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
     }
 
     private void applyRequest(Recipe recipe, RecipeRequest request) {
         User author = userRepository.findById(request.getAuthorId())
-                .orElseThrow(() -> new NotFoundException("User with id " + request.getAuthorId() + " was not found"));
+                .orElseThrow(() -> new NotFoundException(USER_WITH_ID_PREFIX + request.getAuthorId() + NOT_FOUND_SUFFIX));
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new NotFoundException("Category with id " + request.getCategoryId() + " was not found"));
+                .orElseThrow(() -> new NotFoundException(CATEGORY_WITH_ID_PREFIX + request.getCategoryId() + NOT_FOUND_SUFFIX));
         List<Ingredient> ingredients = ingredientRepository.findAllById(request.getIngredientIds());
 
         if (ingredients.size() != request.getIngredientIds().size()) {

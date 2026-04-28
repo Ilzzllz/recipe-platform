@@ -10,6 +10,7 @@ class RecipePlatformApplicationTests {
 
     @Test
     void contextLoads() {
+        // Spring fails this test during context bootstrap if the application cannot start.
     }
 
 }

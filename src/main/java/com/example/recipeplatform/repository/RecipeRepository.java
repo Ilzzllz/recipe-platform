@@ -9,36 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
-    /*
-    // Используем паттерн Builder для создания объектов
-    private final List<Recipe> recipes = List.of(
-            Recipe.builder()
-                    .id(1L)
-                    .title("Борщ")
-                    .description("Классический суп")
-                    .build(),
-            Recipe.builder()
-                    .id(2L)
-                    .title("Плов")
-                    .description("Узбекский плов с говядиной")
-                    .build(),
-            Recipe.builder()
-                    .id(3L)
-                    .title("Тирамису")
-                    .description("Кофейный десерт")
-                    .build()
-    );
-
-    public Optional<Recipe> findById(Long id) {
-        return recipes.stream()
-                .filter(r -> r.getId().equals(id))
-                .findFirst();
-    }
-
-    public List<Recipe> findAll() {
-        return recipes;
-    }
-    */
 
     @Query("""
             select distinct r from Recipe r

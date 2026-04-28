@@ -16,6 +16,10 @@ import java.util.List;
 @Service
 public class CookingStepService {
 
+    private static final String RECIPE_WITH_ID_PREFIX = "Recipe with id ";
+    private static final String COOKING_STEP_WITH_ID_PREFIX = "Cooking step with id ";
+    private static final String NOT_FOUND_SUFFIX = " was not found";
+
     private final CookingStepRepository cookingStepRepository;
     private final RecipeRepository recipeRepository;
     private final RecipeMapper recipeMapper;
@@ -43,7 +47,7 @@ public class CookingStepService {
     @Transactional
     public CookingStepDto create(CookingStepRequest request) {
         Recipe recipe = recipeRepository.findById(request.getRecipeId())
-                .orElseThrow(() -> new NotFoundException("Recipe with id " + request.getRecipeId() + " was not found"));
+                .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + request.getRecipeId() + NOT_FOUND_SUFFIX));
         CookingStep step = new CookingStep();
         step.setRecipe(recipe);
         step.setStepOrder(request.getStepOrder());
@@ -55,7 +59,7 @@ public class CookingStepService {
     public CookingStepDto update(Long id, CookingStepRequest request) {
         CookingStep step = findStep(id);
         Recipe recipe = recipeRepository.findById(request.getRecipeId())
-                .orElseThrow(() -> new NotFoundException("Recipe with id " + request.getRecipeId() + " was not found"));
+                .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + request.getRecipeId() + NOT_FOUND_SUFFIX));
         step.setRecipe(recipe);
         step.setStepOrder(request.getStepOrder());
         step.setDescription(request.getDescription());
@@ -69,6 +73,6 @@ public class CookingStepService {
 
     private CookingStep findStep(Long id) {
         return cookingStepRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Cooking step with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(COOKING_STEP_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
     }
 }

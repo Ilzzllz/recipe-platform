@@ -18,6 +18,11 @@ import java.util.List;
 @Service
 public class ReferenceDataService {
 
+    private static final String USER_WITH_ID_PREFIX = "User with id ";
+    private static final String CATEGORY_WITH_ID_PREFIX = "Category with id ";
+    private static final String INGREDIENT_WITH_ID_PREFIX = "Ingredient with id ";
+    private static final String NOT_FOUND_SUFFIX = " was not found";
+
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final IngredientRepository ingredientRepository;
@@ -40,7 +45,7 @@ public class ReferenceDataService {
     @Transactional(readOnly = true)
     public UserDto getUser(Long id) {
         return toUserDto(userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User with id " + id + " was not found")));
+                .orElseThrow(() -> new NotFoundException(USER_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX)));
     }
 
     @Transactional(readOnly = true)
@@ -53,7 +58,7 @@ public class ReferenceDataService {
     @Transactional(readOnly = true)
     public CategoryDto getCategory(Long id) {
         return toCategoryDto(categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category with id " + id + " was not found")));
+                .orElseThrow(() -> new NotFoundException(CATEGORY_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX)));
     }
 
     @Transactional(readOnly = true)
@@ -66,7 +71,7 @@ public class ReferenceDataService {
     @Transactional(readOnly = true)
     public IngredientDto getIngredient(Long id) {
         return toIngredientDto(ingredientRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ingredient with id " + id + " was not found")));
+                .orElseThrow(() -> new NotFoundException(INGREDIENT_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX)));
     }
 
     @Transactional
@@ -87,7 +92,7 @@ public class ReferenceDataService {
     @Transactional
     public UserDto updateUser(Long id, UserDto dto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(USER_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
         user.setUsername(dto.getUsername());
         user.setEmail(dto.getEmail());
         user.setBio(dto.getBio());
@@ -97,7 +102,7 @@ public class ReferenceDataService {
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(USER_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
         userRepository.delete(user);
     }
 
@@ -115,7 +120,7 @@ public class ReferenceDataService {
     @Transactional
     public CategoryDto updateCategory(Long id, CategoryDto dto) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(CATEGORY_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
         return toCategoryDto(categoryRepository.save(category));
@@ -124,7 +129,7 @@ public class ReferenceDataService {
     @Transactional
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(CATEGORY_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
         categoryRepository.delete(category);
     }
 
@@ -141,7 +146,7 @@ public class ReferenceDataService {
     @Transactional
     public IngredientDto updateIngredient(Long id, IngredientDto dto) {
         Ingredient ingredient = ingredientRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ingredient with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(INGREDIENT_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
         ingredient.setName(dto.getName());
         return toIngredientDto(ingredientRepository.save(ingredient));
     }
@@ -149,7 +154,7 @@ public class ReferenceDataService {
     @Transactional
     public void deleteIngredient(Long id) {
         Ingredient ingredient = ingredientRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ingredient with id " + id + " was not found"));
+                .orElseThrow(() -> new NotFoundException(INGREDIENT_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
         ingredientRepository.delete(ingredient);
     }
 
