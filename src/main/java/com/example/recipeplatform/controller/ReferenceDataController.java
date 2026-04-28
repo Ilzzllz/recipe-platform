@@ -4,6 +4,8 @@ import com.example.recipeplatform.dto.CategoryDto;
 import com.example.recipeplatform.dto.IngredientDto;
 import com.example.recipeplatform.dto.UserDto;
 import com.example.recipeplatform.service.ReferenceDataService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Reference Data", description = "CRUD operations for users, categories and ingredients")
 public class ReferenceDataController {
 
     private final ReferenceDataService referenceDataService;
@@ -29,6 +32,7 @@ public class ReferenceDataController {
     }
 
     @GetMapping("/users")
+    @Operation(summary = "Get all users")
     public List<UserDto> getUsers() {
         return referenceDataService.getUsers();
     }
@@ -40,6 +44,7 @@ public class ReferenceDataController {
 
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new user")
     public UserDto createUser(@Valid @RequestBody UserDto dto) {
         return referenceDataService.createUser(dto);
     }
@@ -56,6 +61,7 @@ public class ReferenceDataController {
     }
 
     @GetMapping("/categories")
+    @Operation(summary = "Get all categories")
     public List<CategoryDto> getCategories() {
         return referenceDataService.getCategories();
     }
@@ -67,6 +73,7 @@ public class ReferenceDataController {
 
     @PostMapping("/categories")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new category")
     public CategoryDto createCategory(@Valid @RequestBody CategoryDto dto) {
         return referenceDataService.createCategory(dto);
     }
@@ -83,6 +90,7 @@ public class ReferenceDataController {
     }
 
     @GetMapping("/ingredients")
+    @Operation(summary = "Get all ingredients")
     public List<IngredientDto> getIngredients() {
         return referenceDataService.getIngredients();
     }
@@ -94,6 +102,7 @@ public class ReferenceDataController {
 
     @PostMapping("/ingredients")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new ingredient")
     public IngredientDto createIngredient(@Valid @RequestBody IngredientDto dto) {
         return referenceDataService.createIngredient(dto);
     }

@@ -3,6 +3,8 @@ package com.example.recipeplatform.controller;
 import com.example.recipeplatform.dto.RecipeDto;
 import com.example.recipeplatform.dto.RecipeRequest;
 import com.example.recipeplatform.service.RecipeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/recipes")
+@Tag(name = "Recipes", description = "CRUD operations for recipes")
 public class RecipeController {
 
     private final RecipeService recipeService;
@@ -29,33 +32,39 @@ public class RecipeController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all recipes")
     public List<RecipeDto> getAll() {
         return recipeService.findAll();
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get recipe by id")
     public RecipeDto getById(@PathVariable Long id) {
         return recipeService.getById(id);
     }
 
     @GetMapping("/search")
+    @Operation(summary = "Search recipes by title")
     public List<RecipeDto> getByTitle(@RequestParam String title) {
         return recipeService.searchByTitle(title);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new recipe")
     public RecipeDto create(@Valid @RequestBody RecipeRequest request) {
         return recipeService.create(request);
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update an existing recipe")
     public RecipeDto update(@PathVariable Long id, @Valid @RequestBody RecipeRequest request) {
         return recipeService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete recipe by id")
     public void delete(@PathVariable Long id) {
         recipeService.delete(id);
     }

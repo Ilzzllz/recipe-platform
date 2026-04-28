@@ -3,6 +3,8 @@ package com.example.recipeplatform.controller;
 import com.example.recipeplatform.dto.CookingStepDto;
 import com.example.recipeplatform.dto.CookingStepRequest;
 import com.example.recipeplatform.service.CookingStepService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/steps")
+@Tag(name = "Cooking Steps", description = "CRUD operations for cooking steps")
 public class CookingStepController {
 
     private final CookingStepService cookingStepService;
@@ -28,6 +31,7 @@ public class CookingStepController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all cooking steps")
     public List<CookingStepDto> getAll() {
         return cookingStepService.findAll();
     }
@@ -39,6 +43,7 @@ public class CookingStepController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new cooking step")
     public CookingStepDto create(@Valid @RequestBody CookingStepRequest request) {
         return cookingStepService.create(request);
     }
