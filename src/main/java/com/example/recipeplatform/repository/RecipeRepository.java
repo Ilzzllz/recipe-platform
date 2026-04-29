@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
+    boolean existsByTitleIgnoreCase(String title);
+
     @Query("""
             select distinct r from Recipe r
             left join fetch r.author
