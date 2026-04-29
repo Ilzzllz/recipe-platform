@@ -200,30 +200,6 @@ erDiagram
 
 Их можно оставить как есть или переопределить через переменные окружения.
 
-### Запуск
-
-1. Создать базу данных `recipe_db`.
-2. Убедиться, что PostgreSQL запущен.
-3. Запустить приложение:
-
-```bash
-./mvnw spring-boot:run
-```
-
-### Тесты
-
-Запуск тестов:
-
-```bash
-./mvnw test
-```
-
-Если нужен именно интеграционный старт контекста с реальной БД, можно включить:
-
-```bash
-RUN_DB_TESTS=true ./mvnw test
-```
-
 ## SonarCloud
 
 [recipe-platform on SonarCloud](https://sonarcloud.io/project/overview?id=Ilzzllz_recipe-platform)
