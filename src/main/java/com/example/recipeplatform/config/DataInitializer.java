@@ -22,6 +22,40 @@ import java.util.Map;
 @Configuration
 public class DataInitializer {
 
+    private static final String USER_ANNA = "anna";
+    private static final String USER_NIKITA = "nikita";
+    private static final String USER_SOFIA = "sofia";
+    private static final String USER_MAX = "max";
+    private static final String USER_DEMO_STUDENT = "demo_student";
+
+    private static final String CATEGORY_SOUPS = "soups";
+    private static final String CATEGORY_DESSERTS = "desserts";
+    private static final String CATEGORY_BREAKFASTS = "breakfasts";
+    private static final String CATEGORY_SALADS = "salads";
+    private static final String CATEGORY_DRAFTS = "drafts";
+
+    private static final String INGREDIENT_BEET = "beet";
+    private static final String INGREDIENT_POTATO = "potato";
+    private static final String INGREDIENT_SOUR_CREAM = "sourCream";
+    private static final String INGREDIENT_MASCARPONE = "mascarpone";
+    private static final String INGREDIENT_COFFEE = "coffee";
+    private static final String INGREDIENT_EGG = "egg";
+    private static final String INGREDIENT_TOMATO = "tomato";
+    private static final String INGREDIENT_BREAD = "bread";
+    private static final String INGREDIENT_FETA = "feta";
+    private static final String INGREDIENT_CUCUMBER = "cucumber";
+    private static final String INGREDIENT_CHICKEN = "chicken";
+    private static final String INGREDIENT_LETTUCE = "lettuce";
+    private static final String INGREDIENT_PARMESAN = "parmesan";
+    private static final String INGREDIENT_PUMPKIN = "pumpkin";
+    private static final String INGREDIENT_CREAM = "cream";
+    private static final String INGREDIENT_GARLIC = "garlic";
+    private static final String INGREDIENT_PASTA = "pasta";
+    private static final String INGREDIENT_OLIVE_OIL = "oliveOil";
+    private static final String INGREDIENT_BANANA = "banana";
+    private static final String INGREDIENT_MILK = "milk";
+    private static final String INGREDIENT_HONEY = "honey";
+
     @Bean
     CommandLineRunner seedData(UserRepository userRepository,
                                CategoryRepository categoryRepository,
@@ -30,60 +64,60 @@ public class DataInitializer {
                                TransactionTemplate transactionTemplate) {
         return args -> transactionTemplate.executeWithoutResult(status -> {
             Map<String, User> users = new LinkedHashMap<>();
-            users.put("anna", findOrCreateUser(userRepository, "anna", "anna@recipes.local",
+            users.put(USER_ANNA, findOrCreateUser(userRepository, USER_ANNA, "anna@recipes.local",
                     "Home cook who shares family recipes"));
-            users.put("nikita", findOrCreateUser(userRepository, "nikita", "nikita@recipes.local",
+            users.put(USER_NIKITA, findOrCreateUser(userRepository, USER_NIKITA, "nikita@recipes.local",
                     "Loves quick weeknight meals"));
-            users.put("sofia", findOrCreateUser(userRepository, "sofia", "sofia@recipes.local",
+            users.put(USER_SOFIA, findOrCreateUser(userRepository, USER_SOFIA, "sofia@recipes.local",
                     "Collects cozy breakfast recipes and seasonal desserts"));
-            users.put("max", findOrCreateUser(userRepository, "max", "max@recipes.local",
+            users.put(USER_MAX, findOrCreateUser(userRepository, USER_MAX, "max@recipes.local",
                     "Tests quick meals for busy student life"));
-            users.put("demo_student", findOrCreateUser(userRepository, "demo_student",
+            users.put(USER_DEMO_STUDENT, findOrCreateUser(userRepository, USER_DEMO_STUDENT,
                     "demo_student@recipes.local",
                     "Disposable lab profile. Safe to edit or delete before submission."));
 
             Map<String, Category> categories = new LinkedHashMap<>();
-            categories.put("soups", findOrCreateCategory(categoryRepository, "Soups",
+            categories.put(CATEGORY_SOUPS, findOrCreateCategory(categoryRepository, "Soups",
                     "Hot soups for everyday cooking"));
-            categories.put("desserts", findOrCreateCategory(categoryRepository, "Desserts",
+            categories.put(CATEGORY_DESSERTS, findOrCreateCategory(categoryRepository, "Desserts",
                     "Sweet recipes for tea and coffee"));
-            categories.put("breakfasts", findOrCreateCategory(categoryRepository, "Breakfasts",
+            categories.put(CATEGORY_BREAKFASTS, findOrCreateCategory(categoryRepository, "Breakfasts",
                     "Egg, toast and morning comfort food"));
-            categories.put("salads", findOrCreateCategory(categoryRepository, "Salads",
+            categories.put(CATEGORY_SALADS, findOrCreateCategory(categoryRepository, "Salads",
                     "Fresh and warm salads for lunch and dinner"));
-            categories.put("drafts", findOrCreateCategory(categoryRepository, "Lab Drafts",
+            categories.put(CATEGORY_DRAFTS, findOrCreateCategory(categoryRepository, "Lab Drafts",
                     "Temporary recipes for CRUD demos. Safe to delete before submission."));
 
             Map<String, Ingredient> ingredients = new LinkedHashMap<>();
-            ingredients.put("beet", createIngredient("Beet", ingredientRepository));
-            ingredients.put("potato", createIngredient("Potato", ingredientRepository));
-            ingredients.put("sourCream", createIngredient("Sour cream", ingredientRepository));
-            ingredients.put("mascarpone", createIngredient("Mascarpone", ingredientRepository));
-            ingredients.put("coffee", createIngredient("Coffee", ingredientRepository));
-            ingredients.put("egg", createIngredient("Egg", ingredientRepository));
-            ingredients.put("tomato", createIngredient("Tomato", ingredientRepository));
-            ingredients.put("bread", createIngredient("Bread", ingredientRepository));
-            ingredients.put("feta", createIngredient("Feta", ingredientRepository));
-            ingredients.put("cucumber", createIngredient("Cucumber", ingredientRepository));
-            ingredients.put("chicken", createIngredient("Chicken fillet", ingredientRepository));
-            ingredients.put("lettuce", createIngredient("Lettuce", ingredientRepository));
-            ingredients.put("parmesan", createIngredient("Parmesan", ingredientRepository));
-            ingredients.put("pumpkin", createIngredient("Pumpkin", ingredientRepository));
-            ingredients.put("cream", createIngredient("Cream", ingredientRepository));
-            ingredients.put("garlic", createIngredient("Garlic", ingredientRepository));
-            ingredients.put("pasta", createIngredient("Pasta", ingredientRepository));
-            ingredients.put("oliveOil", createIngredient("Olive oil", ingredientRepository));
-            ingredients.put("banana", createIngredient("Banana", ingredientRepository));
-            ingredients.put("milk", createIngredient("Milk", ingredientRepository));
-            ingredients.put("honey", createIngredient("Honey", ingredientRepository));
+            ingredients.put(INGREDIENT_BEET, createIngredient("Beet", ingredientRepository));
+            ingredients.put(INGREDIENT_POTATO, createIngredient("Potato", ingredientRepository));
+            ingredients.put(INGREDIENT_SOUR_CREAM, createIngredient("Sour cream", ingredientRepository));
+            ingredients.put(INGREDIENT_MASCARPONE, createIngredient("Mascarpone", ingredientRepository));
+            ingredients.put(INGREDIENT_COFFEE, createIngredient("Coffee", ingredientRepository));
+            ingredients.put(INGREDIENT_EGG, createIngredient("Egg", ingredientRepository));
+            ingredients.put(INGREDIENT_TOMATO, createIngredient("Tomato", ingredientRepository));
+            ingredients.put(INGREDIENT_BREAD, createIngredient("Bread", ingredientRepository));
+            ingredients.put(INGREDIENT_FETA, createIngredient("Feta", ingredientRepository));
+            ingredients.put(INGREDIENT_CUCUMBER, createIngredient("Cucumber", ingredientRepository));
+            ingredients.put(INGREDIENT_CHICKEN, createIngredient("Chicken fillet", ingredientRepository));
+            ingredients.put(INGREDIENT_LETTUCE, createIngredient("Lettuce", ingredientRepository));
+            ingredients.put(INGREDIENT_PARMESAN, createIngredient("Parmesan", ingredientRepository));
+            ingredients.put(INGREDIENT_PUMPKIN, createIngredient("Pumpkin", ingredientRepository));
+            ingredients.put(INGREDIENT_CREAM, createIngredient("Cream", ingredientRepository));
+            ingredients.put(INGREDIENT_GARLIC, createIngredient("Garlic", ingredientRepository));
+            ingredients.put(INGREDIENT_PASTA, createIngredient("Pasta", ingredientRepository));
+            ingredients.put(INGREDIENT_OLIVE_OIL, createIngredient("Olive oil", ingredientRepository));
+            ingredients.put(INGREDIENT_BANANA, createIngredient("Banana", ingredientRepository));
+            ingredients.put(INGREDIENT_MILK, createIngredient("Milk", ingredientRepository));
+            ingredients.put(INGREDIENT_HONEY, createIngredient("Honey", ingredientRepository));
 
             createRecipeIfMissing(
                     recipeRepository,
                     "Borscht",
                     "Classic beet soup with vegetables and sour cream",
-                    users.get("anna"),
-                    categories.get("soups"),
-                    List.of(ingredients.get("beet"), ingredients.get("potato"), ingredients.get("sourCream")),
+                    users.get(USER_ANNA),
+                    categories.get(CATEGORY_SOUPS),
+                    List.of(ingredients.get(INGREDIENT_BEET), ingredients.get(INGREDIENT_POTATO), ingredients.get(INGREDIENT_SOUR_CREAM)),
                     List.of(
                             "Prepare the vegetables and broth base",
                             "Simmer until the vegetables are tender",
@@ -95,9 +129,9 @@ public class DataInitializer {
                     recipeRepository,
                     "Tiramisu",
                     "Layered dessert with coffee and mascarpone",
-                    users.get("nikita"),
-                    categories.get("desserts"),
-                    List.of(ingredients.get("mascarpone"), ingredients.get("coffee"), ingredients.get("egg")),
+                    users.get(USER_NIKITA),
+                    categories.get(CATEGORY_DESSERTS),
+                    List.of(ingredients.get(INGREDIENT_MASCARPONE), ingredients.get(INGREDIENT_COFFEE), ingredients.get(INGREDIENT_EGG)),
                     List.of(
                             "Whisk the mascarpone cream",
                             "Soak biscuits in coffee",
@@ -109,9 +143,9 @@ public class DataInitializer {
                     recipeRepository,
                     "Shakshuka",
                     "Eggs baked in a spicy tomato sauce for breakfast",
-                    users.get("sofia"),
-                    categories.get("breakfasts"),
-                    List.of(ingredients.get("egg"), ingredients.get("tomato"), ingredients.get("garlic"), ingredients.get("oliveOil")),
+                    users.get(USER_SOFIA),
+                    categories.get(CATEGORY_BREAKFASTS),
+                    List.of(ingredients.get(INGREDIENT_EGG), ingredients.get(INGREDIENT_TOMATO), ingredients.get(INGREDIENT_GARLIC), ingredients.get(INGREDIENT_OLIVE_OIL)),
                     List.of(
                             "Saute garlic in olive oil",
                             "Cook the tomato base until thickened",
@@ -123,9 +157,9 @@ public class DataInitializer {
                     recipeRepository,
                     "Greek Salad",
                     "Fresh salad with cucumber, tomato and feta",
-                    users.get("anna"),
-                    categories.get("salads"),
-                    List.of(ingredients.get("tomato"), ingredients.get("cucumber"), ingredients.get("feta"), ingredients.get("oliveOil")),
+                    users.get(USER_ANNA),
+                    categories.get(CATEGORY_SALADS),
+                    List.of(ingredients.get(INGREDIENT_TOMATO), ingredients.get(INGREDIENT_CUCUMBER), ingredients.get(INGREDIENT_FETA), ingredients.get(INGREDIENT_OLIVE_OIL)),
                     List.of(
                             "Chop the vegetables into bite-size pieces",
                             "Add feta and drizzle with olive oil",
@@ -137,9 +171,9 @@ public class DataInitializer {
                     recipeRepository,
                     "Caesar Chicken Salad",
                     "Warm chicken salad with lettuce and parmesan",
-                    users.get("max"),
-                    categories.get("salads"),
-                    List.of(ingredients.get("chicken"), ingredients.get("lettuce"), ingredients.get("parmesan"), ingredients.get("bread")),
+                    users.get(USER_MAX),
+                    categories.get(CATEGORY_SALADS),
+                    List.of(ingredients.get(INGREDIENT_CHICKEN), ingredients.get(INGREDIENT_LETTUCE), ingredients.get(INGREDIENT_PARMESAN), ingredients.get(INGREDIENT_BREAD)),
                     List.of(
                             "Pan-fry the chicken until golden",
                             "Toast the bread into crunchy croutons",
@@ -151,9 +185,9 @@ public class DataInitializer {
                     recipeRepository,
                     "Pumpkin Cream Soup",
                     "Smooth autumn soup with pumpkin and cream",
-                    users.get("nikita"),
-                    categories.get("soups"),
-                    List.of(ingredients.get("pumpkin"), ingredients.get("cream"), ingredients.get("garlic"), ingredients.get("oliveOil")),
+                    users.get(USER_NIKITA),
+                    categories.get(CATEGORY_SOUPS),
+                    List.of(ingredients.get(INGREDIENT_PUMPKIN), ingredients.get(INGREDIENT_CREAM), ingredients.get(INGREDIENT_GARLIC), ingredients.get(INGREDIENT_OLIVE_OIL)),
                     List.of(
                             "Roast the pumpkin with garlic",
                             "Blend with warm cream until smooth",
@@ -165,9 +199,9 @@ public class DataInitializer {
                     recipeRepository,
                     "demo_lab_pasta",
                     "Temporary recipe for CRUD, delete and transactional demos. Safe to remove before submission.",
-                    users.get("demo_student"),
-                    categories.get("drafts"),
-                    List.of(ingredients.get("pasta"), ingredients.get("garlic"), ingredients.get("oliveOil"), ingredients.get("parmesan")),
+                    users.get(USER_DEMO_STUDENT),
+                    categories.get(CATEGORY_DRAFTS),
+                    List.of(ingredients.get(INGREDIENT_PASTA), ingredients.get(INGREDIENT_GARLIC), ingredients.get(INGREDIENT_OLIVE_OIL), ingredients.get(INGREDIENT_PARMESAN)),
                     List.of(
                             "Boil the pasta until al dente",
                             "Warm garlic in olive oil without burning it",
@@ -179,9 +213,9 @@ public class DataInitializer {
                     recipeRepository,
                     "demo_lab_smoothie",
                     "Disposable breakfast sample for update and delete checks in Swagger.",
-                    users.get("demo_student"),
-                    categories.get("drafts"),
-                    List.of(ingredients.get("banana"), ingredients.get("milk"), ingredients.get("honey")),
+                    users.get(USER_DEMO_STUDENT),
+                    categories.get(CATEGORY_DRAFTS),
+                    List.of(ingredients.get(INGREDIENT_BANANA), ingredients.get(INGREDIENT_MILK), ingredients.get(INGREDIENT_HONEY)),
                     List.of(
                             "Slice the banana",
                             "Blend banana with milk",
