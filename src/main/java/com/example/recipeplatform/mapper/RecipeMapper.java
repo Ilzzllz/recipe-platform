@@ -1,18 +1,22 @@
 package com.example.recipeplatform.mapper;
 
-import com.example.recipeplatform.dto.CookingStepDto;
-import com.example.recipeplatform.dto.IngredientDto;
+import com.example.recipeplatform.dto.RecipeCreateDto;
 import com.example.recipeplatform.dto.RecipeDto;
-import com.example.recipeplatform.model.CookingStep;
-import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.List;
 
 @Component
 public class RecipeMapper {
+
+    private final IngredientMapper ingredientMapper;
+    private final CookingStepMapper cookingStepMapper;
+
+    public RecipeMapper(IngredientMapper ingredientMapper, CookingStepMapper cookingStepMapper) {
+        this.ingredientMapper = ingredientMapper;
+        this.cookingStepMapper = cookingStepMapper;
+    }
 
     public RecipeDto toDto(Recipe recipe) {
         if (recipe == null) {
@@ -28,30 +32,23 @@ public class RecipeMapper {
         dto.setCategoryId(recipe.getCategory().getId());
         dto.setCategoryName(recipe.getCategory().getName());
         dto.setIngredients(recipe.getIngredients().stream()
-                .map(this::toIngredientDto)
-                .sorted(Comparator.comparing(IngredientDto::getName))
+                .map(ingredientMapper::toDto)
                 .toList());
         dto.setSteps(recipe.getSteps().stream()
-                .sorted(Comparator.comparing(CookingStep::getStepOrder))
-                .map(this::toStepDto)
+                .map(cookingStepMapper::toDto)
                 .toList());
         return dto;
     }
 
-    public CookingStepDto toStepDto(CookingStep step) {
-        CookingStepDto dto = new CookingStepDto();
-        dto.setId(step.getId());
-        dto.setStepOrder(step.getStepOrder());
-        dto.setDescription(step.getDescription());
-        dto.setRecipeId(step.getRecipe().getId());
-        return dto;
+    public Recipe toEntity(RecipeCreateDto dto) {
+        Recipe recipe = new Recipe();
+        updateEntity(recipe, dto);
+        return recipe;
     }
 
-    public IngredientDto toIngredientDto(Ingredient ingredient) {
-        IngredientDto dto = new IngredientDto();
-        dto.setId(ingredient.getId());
-        dto.setName(ingredient.getName());
-        return dto;
+    public void updateEntity(Recipe recipe, RecipeCreateDto dto) {
+        recipe.setTitle(dto.getTitle());
+        recipe.setDescription(dto.getDescription());
     }
 
     public List<RecipeDto> toDtoList(List<Recipe> recipes) {

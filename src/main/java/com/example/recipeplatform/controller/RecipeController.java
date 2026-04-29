@@ -1,7 +1,8 @@
 package com.example.recipeplatform.controller;
 
+import com.example.recipeplatform.dto.NPlusOneDemoResponse;
+import com.example.recipeplatform.dto.RecipeCreateDto;
 import com.example.recipeplatform.dto.RecipeDto;
-import com.example.recipeplatform.dto.RecipeRequest;
 import com.example.recipeplatform.service.RecipeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,16 +50,40 @@ public class RecipeController {
         return recipeService.searchByTitle(title);
     }
 
+    @GetMapping("/n-plus-one/problem")
+    @Operation(summary = "Demonstrate the N+1 problem")
+    public NPlusOneDemoResponse showNPlusOneProblem() {
+        return recipeService.demonstrateNPlusOneProblem();
+    }
+
+    @GetMapping("/n-plus-one/solution")
+    @Operation(summary = "Show the fetch join solution for N+1")
+    public NPlusOneDemoResponse showNPlusOneSolution() {
+        return recipeService.demonstrateNPlusOneSolution();
+    }
+
+    @PostMapping("/transactions/without-transactional")
+    @Operation(summary = "Demonstrate partial save without @Transactional")
+    public void demonstratePartialSave() {
+        recipeService.demonstratePartialSaveWithoutTransactional();
+    }
+
+    @PostMapping("/transactions/with-transactional")
+    @Operation(summary = "Demonstrate rollback with @Transactional")
+    public void demonstrateRollback() {
+        recipeService.demonstrateRollbackWithTransactional();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new recipe")
-    public RecipeDto create(@Valid @RequestBody RecipeRequest request) {
+    public RecipeDto create(@Valid @RequestBody RecipeCreateDto request) {
         return recipeService.create(request);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing recipe")
-    public RecipeDto update(@PathVariable Long id, @Valid @RequestBody RecipeRequest request) {
+    public RecipeDto update(@PathVariable Long id, @Valid @RequestBody RecipeCreateDto request) {
         return recipeService.update(id, request);
     }
 

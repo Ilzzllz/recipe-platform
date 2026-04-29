@@ -1,9 +1,9 @@
 package com.example.recipeplatform.service;
 
 import com.example.recipeplatform.dto.CookingStepDto;
-import com.example.recipeplatform.dto.CookingStepRequest;
+import com.example.recipeplatform.dto.CookingStepCreateDto;
 import com.example.recipeplatform.exception.NotFoundException;
-import com.example.recipeplatform.mapper.RecipeMapper;
+import com.example.recipeplatform.mapper.CookingStepMapper;
 import com.example.recipeplatform.model.CookingStep;
 import com.example.recipeplatform.model.Recipe;
 import com.example.recipeplatform.repository.CookingStepRepository;
@@ -22,48 +22,43 @@ public class CookingStepService {
 
     private final CookingStepRepository cookingStepRepository;
     private final RecipeRepository recipeRepository;
-    private final RecipeMapper recipeMapper;
+    private final CookingStepMapper cookingStepMapper;
 
     public CookingStepService(CookingStepRepository cookingStepRepository,
                               RecipeRepository recipeRepository,
-                              RecipeMapper recipeMapper) {
+                              CookingStepMapper cookingStepMapper) {
         this.cookingStepRepository = cookingStepRepository;
         this.recipeRepository = recipeRepository;
-        this.recipeMapper = recipeMapper;
+        this.cookingStepMapper = cookingStepMapper;
     }
 
     @Transactional(readOnly = true)
     public List<CookingStepDto> findAll() {
         return cookingStepRepository.findAll().stream()
-                .map(recipeMapper::toStepDto)
+                .map(cookingStepMapper::toDto)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public CookingStepDto findById(Long id) {
-        return recipeMapper.toStepDto(findStep(id));
+        return cookingStepMapper.toDto(findStep(id));
     }
 
     @Transactional
-    public CookingStepDto create(CookingStepRequest request) {
-        Recipe recipe = recipeRepository.findById(request.getRecipeId())
-                .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + request.getRecipeId() + NOT_FOUND_SUFFIX));
-        CookingStep step = new CookingStep();
+    public CookingStepDto create(CookingStepCreateDto request) {
+        Recipe recipe = findRecipe(resolveRecipeId(request));
+        CookingStep step = cookingStepMapper.toEntity(request);
         step.setRecipe(recipe);
-        step.setStepOrder(request.getStepOrder());
-        step.setDescription(request.getDescription());
-        return recipeMapper.toStepDto(cookingStepRepository.save(step));
+        return cookingStepMapper.toDto(cookingStepRepository.save(step));
     }
 
     @Transactional
-    public CookingStepDto update(Long id, CookingStepRequest request) {
+    public CookingStepDto update(Long id, CookingStepCreateDto request) {
         CookingStep step = findStep(id);
-        Recipe recipe = recipeRepository.findById(request.getRecipeId())
-                .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + request.getRecipeId() + NOT_FOUND_SUFFIX));
+        Recipe recipe = findRecipe(resolveRecipeId(request));
+        cookingStepMapper.updateEntity(step, request);
         step.setRecipe(recipe);
-        step.setStepOrder(request.getStepOrder());
-        step.setDescription(request.getDescription());
-        return recipeMapper.toStepDto(cookingStepRepository.save(step));
+        return cookingStepMapper.toDto(cookingStepRepository.save(step));
     }
 
     @Transactional
@@ -74,5 +69,17 @@ public class CookingStepService {
     private CookingStep findStep(Long id) {
         return cookingStepRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(COOKING_STEP_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
+    }
+
+    private Recipe findRecipe(Long recipeId) {
+        return recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + recipeId + NOT_FOUND_SUFFIX));
+    }
+
+    private Long resolveRecipeId(CookingStepCreateDto request) {
+        if (request.getRecipeId() == null) {
+            throw new IllegalArgumentException("recipeId is required for cooking step requests");
+        }
+        return request.getRecipeId();
     }
 }

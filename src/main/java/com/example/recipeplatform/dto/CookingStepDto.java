@@ -5,10 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CookingStepDto {
+public class CookingStepDto extends CookingStepCreateDto {
 
     private Long id;
-    private Integer stepOrder;
-    private String description;
-    private Long recipeId;
 }

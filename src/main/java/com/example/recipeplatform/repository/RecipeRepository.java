@@ -18,7 +18,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             left join fetch r.steps
             order by r.id
             """)
-    List<Recipe> findAllWithDetails();
+    List<Recipe> findAllWithFetchJoin();
 
     @Query("""
             select distinct r from Recipe r
@@ -28,7 +28,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             left join fetch r.steps
             where r.id = :id
             """)
-    Optional<Recipe> findDetailedById(@Param("id") Long id);
+    Optional<Recipe> findByIdWithFetchJoin(@Param("id") Long id);
 
     @Query("""
             select distinct r from Recipe r
@@ -39,7 +39,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             where lower(r.title) like lower(concat('%', :title, '%'))
             order by r.id
             """)
-    List<Recipe> searchWithDetails(@Param("title") String title);
+    List<Recipe> searchWithFetchJoin(@Param("title") String title);
 
     long countByTitleStartingWith(String prefix);
 }

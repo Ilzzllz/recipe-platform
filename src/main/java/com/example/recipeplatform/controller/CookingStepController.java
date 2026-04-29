@@ -1,7 +1,7 @@
 package com.example.recipeplatform.controller;
 
+import com.example.recipeplatform.dto.CookingStepCreateDto;
 import com.example.recipeplatform.dto.CookingStepDto;
-import com.example.recipeplatform.dto.CookingStepRequest;
 import com.example.recipeplatform.service.CookingStepService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/steps")
+@RequestMapping("/api/cooking-steps")
 @Tag(name = "Cooking Steps", description = "CRUD operations for cooking steps")
 public class CookingStepController {
 
@@ -37,6 +37,7 @@ public class CookingStepController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get cooking step by id")
     public CookingStepDto getById(@PathVariable Long id) {
         return cookingStepService.findById(id);
     }
@@ -44,17 +45,19 @@ public class CookingStepController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new cooking step")
-    public CookingStepDto create(@Valid @RequestBody CookingStepRequest request) {
+    public CookingStepDto create(@Valid @RequestBody CookingStepCreateDto request) {
         return cookingStepService.create(request);
     }
 
     @PutMapping("/{id}")
-    public CookingStepDto update(@PathVariable Long id, @Valid @RequestBody CookingStepRequest request) {
+    @Operation(summary = "Update cooking step by id")
+    public CookingStepDto update(@PathVariable Long id, @Valid @RequestBody CookingStepCreateDto request) {
         return cookingStepService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete cooking step by id")
     public void delete(@PathVariable Long id) {
         cookingStepService.delete(id);
     }

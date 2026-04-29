@@ -1,5 +1,6 @@
 package com.example.recipeplatform.service;
 
+import com.example.recipeplatform.exception.TransactionDemoException;
 import com.example.recipeplatform.model.Category;
 import com.example.recipeplatform.model.CookingStep;
 import com.example.recipeplatform.model.Ingredient;
@@ -18,6 +19,8 @@ import java.util.List;
 @Service
 public class RecipeTransactionScenarioService {
 
+    private static final String FAILURE_MESSAGE = "Intentional failure after saving related entities";
+
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final IngredientRepository ingredientRepository;
@@ -34,15 +37,15 @@ public class RecipeTransactionScenarioService {
     }
 
     public void saveWithoutTransactional(String marker) {
-        persistGraphAndFail(marker);
+        persistGraphAndFail("Without @Transactional", marker);
     }
 
     @Transactional
     public void saveWithTransactional(String marker) {
-        persistGraphAndFail(marker);
+        persistGraphAndFail("With @Transactional", marker);
     }
 
-    private void persistGraphAndFail(String marker) {
+    private void persistGraphAndFail(String scenario, String marker) {
         User user = new User();
         user.setUsername(marker + "_author");
         user.setEmail(marker + "@lab.local");
@@ -77,6 +80,6 @@ public class RecipeTransactionScenarioService {
 
         recipeRepository.save(recipe);
 
-        throw new IllegalStateException("Intentional failure after saving related entities");
+        throw new TransactionDemoException(scenario, marker, FAILURE_MESSAGE);
     }
 }
