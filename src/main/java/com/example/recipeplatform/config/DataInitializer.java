@@ -226,9 +226,7 @@ public class DataInitializer {
     }
 
     private Ingredient createIngredient(String name, IngredientRepository ingredientRepository) {
-        return ingredientRepository.findAll().stream()
-                .filter(ingredient -> ingredient.getName().equalsIgnoreCase(name))
-                .findFirst()
+        return ingredientRepository.findByNameIgnoreCase(name)
                 .orElseGet(() -> {
                     Ingredient ingredient = new Ingredient();
                     ingredient.setName(name);
@@ -237,9 +235,7 @@ public class DataInitializer {
     }
 
     private User findOrCreateUser(UserRepository userRepository, String username, String email, String bio) {
-        return userRepository.findAll().stream()
-                .filter(user -> user.getUsername().equalsIgnoreCase(username))
-                .findFirst()
+        return userRepository.findByUsernameIgnoreCase(username)
                 .orElseGet(() -> {
                     User user = new User();
                     user.setUsername(username);
@@ -250,9 +246,7 @@ public class DataInitializer {
     }
 
     private Category findOrCreateCategory(CategoryRepository categoryRepository, String name, String description) {
-        return categoryRepository.findAll().stream()
-                .filter(category -> category.getName().equalsIgnoreCase(name))
-                .findFirst()
+        return categoryRepository.findByNameIgnoreCase(name)
                 .orElseGet(() -> {
                     Category category = new Category();
                     category.setName(name);

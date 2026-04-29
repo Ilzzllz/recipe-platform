@@ -6,6 +6,7 @@ import com.example.recipeplatform.exception.NotFoundException;
 import com.example.recipeplatform.mapper.CategoryMapper;
 import com.example.recipeplatform.model.Category;
 import com.example.recipeplatform.repository.CategoryRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,8 @@ public class CategoryService {
 
     private static final String CATEGORY_WITH_ID_PREFIX = "Category with id ";
     private static final String NOT_FOUND_SUFFIX = " was not found";
+    private static final String CATEGORY_ALREADY_EXISTS = "Category already exists";
+    private static final Sort SORT_BY_ID = Sort.by(Sort.Direction.ASC, "id");
 
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
@@ -27,9 +30,7 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategoryDto> findAll() {
-        return categoryRepository.findAll().stream()
-                .map(categoryMapper::toDto)
-                .toList();
+        return categoryMapper.toDtoList(categoryRepository.findAll(SORT_BY_ID));
     }
 
     @Transactional(readOnly = true)
@@ -40,7 +41,7 @@ public class CategoryService {
     @Transactional
     public CategoryDto create(CategoryCreateDto dto) {
         if (categoryRepository.existsByNameIgnoreCase(dto.getName())) {
-            throw new IllegalArgumentException("Category already exists");
+            throw new IllegalArgumentException(CATEGORY_ALREADY_EXISTS);
         }
         return categoryMapper.toDto(categoryRepository.save(categoryMapper.toEntity(dto)));
     }
@@ -48,6 +49,11 @@ public class CategoryService {
     @Transactional
     public CategoryDto update(Long id, CategoryCreateDto dto) {
         Category category = findEntity(id);
+        categoryRepository.findByNameIgnoreCase(dto.getName())
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException(CATEGORY_ALREADY_EXISTS);
+                });
         categoryMapper.updateEntity(category, dto);
         return categoryMapper.toDto(categoryRepository.save(category));
     }

@@ -5,6 +5,8 @@ import com.example.recipeplatform.dto.UserDto;
 import com.example.recipeplatform.model.User;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class UserMapper {
 
@@ -31,5 +33,11 @@ public class UserMapper {
         user.setUsername(dto.getUsername());
         user.setEmail(dto.getEmail());
         user.setBio(dto.getBio());
+    }
+
+    public List<UserDto> toDtoList(List<User> users) {
+        return users.stream()
+                .map(this::toDto)
+                .toList();
     }
 }

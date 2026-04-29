@@ -5,6 +5,8 @@ import com.example.recipeplatform.dto.IngredientDto;
 import com.example.recipeplatform.model.Ingredient;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class IngredientMapper {
 
@@ -27,5 +29,11 @@ public class IngredientMapper {
 
     public void updateEntity(Ingredient ingredient, IngredientCreateDto dto) {
         ingredient.setName(dto.getName());
+    }
+
+    public List<IngredientDto> toDtoList(List<Ingredient> ingredients) {
+        return ingredients.stream()
+                .map(this::toDto)
+                .toList();
     }
 }

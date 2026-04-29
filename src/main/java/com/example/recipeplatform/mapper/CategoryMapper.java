@@ -5,6 +5,8 @@ import com.example.recipeplatform.dto.CategoryDto;
 import com.example.recipeplatform.model.Category;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class CategoryMapper {
 
@@ -29,5 +31,11 @@ public class CategoryMapper {
     public void updateEntity(Category category, CategoryCreateDto dto) {
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
+    }
+
+    public List<CategoryDto> toDtoList(List<Category> categories) {
+        return categories.stream()
+                .map(this::toDto)
+                .toList();
     }
 }

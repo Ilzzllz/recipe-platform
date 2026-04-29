@@ -8,6 +8,7 @@ import com.example.recipeplatform.model.CookingStep;
 import com.example.recipeplatform.model.Recipe;
 import com.example.recipeplatform.repository.CookingStepRepository;
 import com.example.recipeplatform.repository.RecipeRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class CookingStepService {
     private static final String RECIPE_WITH_ID_PREFIX = "Recipe with id ";
     private static final String COOKING_STEP_WITH_ID_PREFIX = "Cooking step with id ";
     private static final String NOT_FOUND_SUFFIX = " was not found";
+    private static final Sort SORT_BY_ID = Sort.by(Sort.Direction.ASC, "id");
 
     private final CookingStepRepository cookingStepRepository;
     private final RecipeRepository recipeRepository;
@@ -34,9 +36,7 @@ public class CookingStepService {
 
     @Transactional(readOnly = true)
     public List<CookingStepDto> findAll() {
-        return cookingStepRepository.findAll().stream()
-                .map(cookingStepMapper::toDto)
-                .toList();
+        return cookingStepMapper.toDtoList(cookingStepRepository.findAll(SORT_BY_ID));
     }
 
     @Transactional(readOnly = true)

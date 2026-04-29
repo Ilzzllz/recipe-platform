@@ -7,6 +7,7 @@ import com.example.recipeplatform.mapper.IngredientMapper;
 import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
 import com.example.recipeplatform.repository.IngredientRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,8 @@ public class IngredientService {
 
     private static final String INGREDIENT_WITH_ID_PREFIX = "Ingredient with id ";
     private static final String NOT_FOUND_SUFFIX = " was not found";
+    private static final String INGREDIENT_ALREADY_EXISTS = "Ingredient already exists";
+    private static final Sort SORT_BY_ID = Sort.by(Sort.Direction.ASC, "id");
 
     private final IngredientRepository ingredientRepository;
     private final IngredientMapper ingredientMapper;
@@ -30,9 +33,7 @@ public class IngredientService {
 
     @Transactional(readOnly = true)
     public List<IngredientDto> findAll() {
-        return ingredientRepository.findAll().stream()
-                .map(ingredientMapper::toDto)
-                .toList();
+        return ingredientMapper.toDtoList(ingredientRepository.findAll(SORT_BY_ID));
     }
 
     @Transactional(readOnly = true)
@@ -43,7 +44,7 @@ public class IngredientService {
     @Transactional
     public IngredientDto create(IngredientCreateDto dto) {
         if (ingredientRepository.existsByNameIgnoreCase(dto.getName())) {
-            throw new IllegalArgumentException("Ingredient already exists");
+            throw new IllegalArgumentException(INGREDIENT_ALREADY_EXISTS);
         }
         return ingredientMapper.toDto(ingredientRepository.save(ingredientMapper.toEntity(dto)));
     }
@@ -51,6 +52,11 @@ public class IngredientService {
     @Transactional
     public IngredientDto update(Long id, IngredientCreateDto dto) {
         Ingredient ingredient = findEntity(id);
+        ingredientRepository.findByNameIgnoreCase(dto.getName())
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException(INGREDIENT_ALREADY_EXISTS);
+                });
         ingredientMapper.updateEntity(ingredient, dto);
         return ingredientMapper.toDto(ingredientRepository.save(ingredient));
     }
