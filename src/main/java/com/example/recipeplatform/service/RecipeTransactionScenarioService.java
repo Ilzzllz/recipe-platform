@@ -2,7 +2,6 @@ package com.example.recipeplatform.service;
 
 import com.example.recipeplatform.exception.TransactionDemoException;
 import com.example.recipeplatform.model.Category;
-import com.example.recipeplatform.model.CookingStep;
 import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
 import com.example.recipeplatform.model.User;
@@ -13,13 +12,8 @@ import com.example.recipeplatform.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-
 @Service
 public class RecipeTransactionScenarioService {
-
-    private static final String FAILURE_MESSAGE = "Intentional failure after saving related entities";
 
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -36,50 +30,69 @@ public class RecipeTransactionScenarioService {
         this.recipeRepository = recipeRepository;
     }
 
+    /**
+     * БЕЗ @Transactional – каждый saveAndFlush() сразу пишет в БД.
+     * Исключение выбрасывается после сохранения User, Category, Ingredient.
+     * Результат: Эти 3 записи остаются в БД, рецепт не создаётся.
+     */
     public void saveWithoutTransactional(String marker) {
-        persistGraphAndFail("Without @Transactional", marker);
-    }
-
-    @Transactional
-    public void saveWithTransactional(String marker) {
-        persistGraphAndFail("With @Transactional", marker);
-    }
-
-    private void persistGraphAndFail(String scenario, String marker) {
+        // 1. User
         User user = new User();
         user.setUsername(marker + "_author");
         user.setEmail(marker + "@lab.local");
-        user.setBio("Created for transaction demo");
-        user = userRepository.save(user);
+        user.setBio("Created for transaction demo (no tx)");
+        userRepository.saveAndFlush(user);
 
+        // 2. Category
         Category category = new Category();
         category.setName(marker + "_category");
-        category.setDescription("Created for transaction demo");
-        category = categoryRepository.save(category);
+        category.setDescription("Created for transaction demo (no tx)");
+        categoryRepository.saveAndFlush(category);
 
+        // 3. Ingredient
         Ingredient ingredient = new Ingredient();
         ingredient.setName(marker + "_ingredient");
-        ingredient = ingredientRepository.save(ingredient);
+        ingredientRepository.saveAndFlush(ingredient);
 
+        // Симулируем ошибку – рецепт не создаётся
+        throw new TransactionDemoException("Without @Transactional", marker,
+                "User, Category and Ingredient saved (partial commit), recipe NOT saved due to error.");
+    }
+
+    /**
+     * С @Transactional – все операции внутри транзакции.
+     * При выбросе исключения – полный откат, ничего не сохраняется.
+     */
+    @Transactional
+    public void saveWithTransactional(String marker) {
+        // 1. User
+        User user = new User();
+        user.setUsername(marker + "_author");
+        user.setEmail(marker + "@lab.local");
+        user.setBio("Created for transaction demo (with tx)");
+        userRepository.save(user);
+
+        // 2. Category
+        Category category = new Category();
+        category.setName(marker + "_category");
+        category.setDescription("Created for transaction demo (with tx)");
+        categoryRepository.save(category);
+
+        // 3. Ingredient
+        Ingredient ingredient = new Ingredient();
+        ingredient.setName(marker + "_ingredient");
+        ingredientRepository.save(ingredient);
+
+        // 4. Recipe (для наглядности)
         Recipe recipe = new Recipe();
         recipe.setTitle(marker + "_recipe");
-        recipe.setDescription("Recipe created inside the transaction demo");
+        recipe.setDescription("This recipe will be rolled back");
         recipe.setAuthor(user);
         recipe.setCategory(category);
-        recipe.replaceIngredients(new LinkedHashSet<>(List.of(ingredient)));
-
-        CookingStep firstStep = new CookingStep();
-        firstStep.setStepOrder(1);
-        firstStep.setDescription(marker + "_step_prepare");
-        recipe.addStep(firstStep);
-
-        CookingStep secondStep = new CookingStep();
-        secondStep.setStepOrder(2);
-        secondStep.setDescription(marker + "_step_fail");
-        recipe.addStep(secondStep);
-
+        recipe.replaceIngredients(java.util.Set.of(ingredient));
         recipeRepository.save(recipe);
 
-        throw new TransactionDemoException(scenario, marker, FAILURE_MESSAGE);
+        throw new TransactionDemoException("With @Transactional", marker,
+                "Everything rolled back due to intentional failure.");
     }
 }

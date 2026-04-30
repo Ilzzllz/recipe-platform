@@ -12,111 +12,14 @@
 6. Реализовано сохранение нескольких связанных сущностей с показом частичного сохранения без `@Transactional` и полного отката с `@Transactional`.
 7. Добавлена ER-диаграмма с `PK/FK` и связями.
 
-## Технологический стек
-
-* `Java 21`
-* `Spring Boot 3`
-* `Spring Web`
-* `Spring Data JPA`
-* `PostgreSQL`
-* `Lombok`
-* `Maven`
-* `JUnit 5`
-
-## Архитектура проекта
-
-Проект построен по многослойной архитектуре:
-
-* `controller` — обработка HTTP-запросов.
-* `service` — бизнес-логика и сценарии для демонстрации требований лабораторной.
-* `repository` — доступ к данным через Spring Data JPA.
-* `model` — сущности базы данных.
-* `dto` — объекты передачи данных.
-* `mapper` — преобразование сущностей в DTO.
-* `exception` — централизованная обработка ошибок.
-
-## Модель данных
-
-В проекте используются сущности:
-
-1. `User`
-2. `Recipe`
-3. `Category`
-4. `Ingredient`
-5. `CookingStep`
-
-Реализованные связи:
-
-* `User` -> `Recipe` — `OneToMany`
-* `Category` -> `Recipe` — `OneToMany`
-* `Recipe` -> `CookingStep` — `OneToMany`
-* `Recipe` <-> `Ingredient` — `ManyToMany`
-
-## Обоснование CascadeType и FetchType
-
-Для ассоциаций в проекте по умолчанию используется `FetchType.LAZY`. Это позволяет:
-
-* не загружать весь граф объектов без необходимости;
-* уменьшить количество лишних данных в типичных запросах;
-* наглядно показать проблему `N+1`.
-
-Для связи `Recipe -> CookingStep` настроены `CascadeType.ALL` и `orphanRemoval = true`, потому что:
-
-* шаги приготовления принадлежат только одному рецепту;
-* шаг не имеет самостоятельного жизненного цикла вне рецепта;
-* при обновлении или удалении рецепта связанные шаги должны меняться вместе с ним.
-
-Для `User`, `Category` и `Ingredient` каскадное удаление не используется, потому что эти сущности независимы и могут использоваться в нескольких местах.
-
-## CRUD API
-
-### Рецепты
-
-* `GET /api/recipes`
-* `GET /api/recipes/{id}`
-* `GET /api/recipes/search?title=...`
-* `POST /api/recipes`
-* `PUT /api/recipes/{id}`
-* `DELETE /api/recipes/{id}`
-
-### Пользователи
-
-* `GET /api/users`
-* `GET /api/users/{id}`
-* `POST /api/users`
-* `PUT /api/users/{id}`
-* `DELETE /api/users/{id}`
-
-### Категории
-
-* `GET /api/categories`
-* `GET /api/categories/{id}`
-* `POST /api/categories`
-* `PUT /api/categories/{id}`
-* `DELETE /api/categories/{id}`
-
-### Ингредиенты
-
-* `GET /api/ingredients`
-* `GET /api/ingredients/{id}`
-* `POST /api/ingredients`
-* `PUT /api/ingredients/{id}`
-* `DELETE /api/ingredients/{id}`
-
-### Шаги приготовления
-
-* `GET /api/steps`
-* `GET /api/steps/{id}`
-* `POST /api/steps`
-* `PUT /api/steps/{id}`
-* `DELETE /api/steps/{id}`
 
 ## Демонстрация проблемы N+1
 
 Для лабораторной добавлены специальные эндпоинты:
 
-* `GET /api/lab/n-plus-one/problem` — сценарий с проблемой `N+1`
-* `GET /api/lab/n-plus-one/solution` — сценарий с её решением через `fetch join`
+* `http://localhost:8080/api/recipes/n-plus-one/problem
+` — сценарий с проблемой `N+1`
+* `http://localhost:8080/api/recipes/n-plus-one/solution` — сценарий с её решением через `fetch join`
 
 В ответе возвращается количество SQL-запросов, чтобы можно было сравнить поведение до и после оптимизации.
 

@@ -1,10 +1,12 @@
 package com.example.recipeplatform.service;
 
-import com.example.recipeplatform.dto.CookingStepCreateDto;
 import com.example.recipeplatform.dto.NPlusOneDemoResponse;
 import com.example.recipeplatform.dto.RecipeDto;
 import com.example.recipeplatform.dto.RecipeCreateDto;
+import com.example.recipeplatform.dto.RecipeStepCreateDto;
+import com.example.recipeplatform.dto.TransactionDemoResponse;
 import com.example.recipeplatform.exception.NotFoundException;
+import com.example.recipeplatform.exception.TransactionDemoException;
 import com.example.recipeplatform.mapper.CookingStepMapper;
 import com.example.recipeplatform.mapper.RecipeMapper;
 import com.example.recipeplatform.model.Category;
@@ -13,6 +15,7 @@ import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
 import com.example.recipeplatform.model.User;
 import com.example.recipeplatform.repository.CategoryRepository;
+import com.example.recipeplatform.repository.CookingStepRepository;
 import com.example.recipeplatform.repository.IngredientRepository;
 import com.example.recipeplatform.repository.RecipeRepository;
 import com.example.recipeplatform.repository.UserRepository;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class RecipeService {
@@ -38,6 +42,7 @@ public class RecipeService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final IngredientRepository ingredientRepository;
+    private final CookingStepRepository cookingStepRepository;
     private final RecipeMapper recipeMapper;
     private final CookingStepMapper cookingStepMapper;
     private final EntityManagerFactory entityManagerFactory;
@@ -47,6 +52,7 @@ public class RecipeService {
                          UserRepository userRepository,
                          CategoryRepository categoryRepository,
                          IngredientRepository ingredientRepository,
+                         CookingStepRepository cookingStepRepository,
                          RecipeMapper recipeMapper,
                          CookingStepMapper cookingStepMapper,
                          EntityManagerFactory entityManagerFactory,
@@ -55,12 +61,14 @@ public class RecipeService {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.ingredientRepository = ingredientRepository;
+        this.cookingStepRepository = cookingStepRepository;
         this.recipeMapper = recipeMapper;
         this.cookingStepMapper = cookingStepMapper;
         this.entityManagerFactory = entityManagerFactory;
         this.recipeTransactionScenarioService = recipeTransactionScenarioService;
     }
 
+    // ---------- CRUD ----------
     @Transactional(readOnly = true)
     public List<RecipeDto> findAll() {
         return recipeMapper.toDtoList(recipeRepository.findAllWithFetchJoin());
@@ -97,6 +105,7 @@ public class RecipeService {
         recipeRepository.delete(recipe);
     }
 
+    // ---------- N+1 демо ----------
     @Transactional(readOnly = true)
     public NPlusOneDemoResponse demonstrateNPlusOneProblem() {
         Statistics statistics = statistics();
@@ -115,14 +124,20 @@ public class RecipeService {
         return buildNPlusOneResponse("Fetch join solution", recipes, statistics.getPrepareStatementCount());
     }
 
-    public void demonstratePartialSaveWithoutTransactional() {
-        recipeTransactionScenarioService.saveWithoutTransactional(buildMarker("plain"));
+    // ---------- Транзакционные демо (оба возвращают HTTP 500) ----------
+    public TransactionDemoResponse demonstratePartialSaveWithoutTransactional() {
+        String marker = buildMarker("plain");
+        recipeTransactionScenarioService.saveWithoutTransactional(marker);
+        throw new IllegalStateException("Unreachable");
     }
 
-    public void demonstrateRollbackWithTransactional() {
-        recipeTransactionScenarioService.saveWithTransactional(buildMarker("tx"));
+    public TransactionDemoResponse demonstrateRollbackWithTransactional() {
+        String marker = buildMarker("tx");
+        recipeTransactionScenarioService.saveWithTransactional(marker);
+        throw new IllegalStateException("Unreachable");
     }
 
+    // ---------- Приватные вспомогательные методы ----------
     private Recipe findDetailedRecipe(Long id) {
         return recipeRepository.findByIdWithFetchJoin(id)
                 .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
@@ -146,7 +161,7 @@ public class RecipeService {
         recipe.replaceSteps(mapSteps(request.getSteps()));
     }
 
-    private List<CookingStep> mapSteps(List<CookingStepCreateDto> stepRequests) {
+    private List<CookingStep> mapSteps(List<RecipeStepCreateDto> stepRequests) {
         return stepRequests.stream()
                 .map(cookingStepMapper::toEntity)
                 .toList();
@@ -171,4 +186,3 @@ public class RecipeService {
         return entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
     }
 }
-

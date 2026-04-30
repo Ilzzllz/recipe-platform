@@ -2,6 +2,7 @@ package com.example.recipeplatform.mapper;
 
 import com.example.recipeplatform.dto.CookingStepCreateDto;
 import com.example.recipeplatform.dto.CookingStepDto;
+import com.example.recipeplatform.dto.RecipeStepCreateDto;
 import com.example.recipeplatform.model.CookingStep;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,13 @@ public class CookingStepMapper {
     public CookingStep toEntity(CookingStepCreateDto dto) {
         CookingStep step = new CookingStep();
         updateEntity(step, dto);
+        return step;
+    }
+
+    public CookingStep toEntity(RecipeStepCreateDto dto) {
+        CookingStep step = new CookingStep();
+        step.setStepOrder(dto.getStepOrder());
+        step.setDescription(dto.getDescription());
         return step;
     }
 

@@ -8,18 +8,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Schema(description = "Cooking step create or update request")
-public class CookingStepCreateDto {
-
-    @NotNull
-    @Schema(description = "Recipe identifier that owns this step", example = "12")
-    private Long recipeId;
+@Schema(description = "Cooking step used inside recipe create and update requests")
+public class RecipeStepCreateDto {
 
     @NotNull
     @Schema(description = "Step order inside the recipe", example = "1")
     private Integer stepOrder;
 
     @NotBlank
-    @Schema(description = "Step description", example = "Prepare the vegetables and broth base")
+    @Schema(description = "Step description", example = "Boil the pasta until al dente")
     private String description;
 }
