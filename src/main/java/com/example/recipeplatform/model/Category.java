@@ -1,7 +1,6 @@
 package com.example.recipeplatform.model;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,6 +29,7 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    // cascade и orphanRemoval убраны — удаление категории не должно удалять рецепты
+    @OneToMany(mappedBy = "category")
     private List<Recipe> recipes = new ArrayList<>();
 }

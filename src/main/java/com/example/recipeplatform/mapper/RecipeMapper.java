@@ -1,5 +1,7 @@
 package com.example.recipeplatform.mapper;
 
+import com.example.recipeplatform.dto.AuthorReferenceDto;
+import com.example.recipeplatform.dto.CategoryReferenceDto;
 import com.example.recipeplatform.dto.RecipeCreateDto;
 import com.example.recipeplatform.dto.RecipeDto;
 import com.example.recipeplatform.model.CookingStep;
@@ -32,10 +34,17 @@ public class RecipeMapper {
         dto.setId(recipe.getId());
         dto.setTitle(recipe.getTitle());
         dto.setDescription(recipe.getDescription());
-        dto.setAuthorId(recipe.getAuthor().getId());
-        dto.setAuthorUsername(recipe.getAuthor().getUsername());
-        dto.setCategoryId(recipe.getCategory().getId());
-        dto.setCategoryName(recipe.getCategory().getName());
+
+        AuthorReferenceDto authorRef = new AuthorReferenceDto();
+        authorRef.setId(recipe.getAuthor().getId());
+        authorRef.setUsername(recipe.getAuthor().getUsername());
+        dto.setAuthor(authorRef);
+
+        CategoryReferenceDto categoryRef = new CategoryReferenceDto();
+        categoryRef.setId(recipe.getCategory().getId());
+        categoryRef.setName(recipe.getCategory().getName());
+        dto.setCategory(categoryRef);
+
         dto.setIngredients(uniqueIngredients(recipe));
         dto.setSteps(uniqueSteps(recipe));
         return dto;

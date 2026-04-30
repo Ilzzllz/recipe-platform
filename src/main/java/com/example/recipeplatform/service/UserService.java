@@ -19,6 +19,7 @@ public class UserService {
     private static final String NOT_FOUND_SUFFIX = " was not found";
     private static final String USERNAME_ALREADY_EXISTS = "Username already exists";
     private static final String EMAIL_ALREADY_EXISTS = "Email already exists";
+    private static final String USER_NOT_EMPTY = "Cannot delete user that has recipes. Remove or reassign recipes first.";
     private static final Sort SORT_BY_ID = Sort.by(Sort.Direction.ASC, "id");
 
     private final UserRepository userRepository;
@@ -60,7 +61,11 @@ public class UserService {
 
     @Transactional
     public void delete(Long id) {
-        userRepository.delete(findEntity(id));
+        User user = findEntity(id);
+        if (!user.getRecipes().isEmpty()) {
+            throw new IllegalArgumentException(USER_NOT_EMPTY);
+        }
+        userRepository.delete(user);
     }
 
     private User findEntity(Long id) {

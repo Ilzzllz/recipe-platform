@@ -18,6 +18,7 @@ public class CategoryService {
     private static final String CATEGORY_WITH_ID_PREFIX = "Category with id ";
     private static final String NOT_FOUND_SUFFIX = " was not found";
     private static final String CATEGORY_ALREADY_EXISTS = "Category already exists";
+    private static final String CATEGORY_NOT_EMPTY = "Cannot delete category that has recipes. Remove or reassign recipes first.";
     private static final Sort SORT_BY_ID = Sort.by(Sort.Direction.ASC, "id");
 
     private final CategoryRepository categoryRepository;
@@ -60,7 +61,11 @@ public class CategoryService {
 
     @Transactional
     public void delete(Long id) {
-        categoryRepository.delete(findEntity(id));
+        Category category = findEntity(id);
+        if (!category.getRecipes().isEmpty()) {
+            throw new IllegalArgumentException(CATEGORY_NOT_EMPTY);
+        }
+        categoryRepository.delete(category);
     }
 
     private Category findEntity(Long id) {
