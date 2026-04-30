@@ -33,6 +33,8 @@ public class DataInitializer {
     private static final String CATEGORY_BREAKFASTS = "breakfasts";
     private static final String CATEGORY_SALADS = "salads";
     private static final String CATEGORY_DRAFTS = "drafts";
+    private static final String CATEGORY_GRILL = "grill";
+    private static final String CATEGORY_VEGAN = "vegan";
 
     private static final String INGREDIENT_BEET = "beet";
     private static final String INGREDIENT_POTATO = "potato";
@@ -55,6 +57,21 @@ public class DataInitializer {
     private static final String INGREDIENT_BANANA = "banana";
     private static final String INGREDIENT_MILK = "milk";
     private static final String INGREDIENT_HONEY = "honey";
+    private static final String INGREDIENT_FLOUR = "flour";
+    private static final String INGREDIENT_SUGAR = "sugar";
+    private static final String INGREDIENT_BUTTER = "butter";
+    private static final String INGREDIENT_SHRIMP = "shrimp";
+    private static final String INGREDIENT_AVOCADO = "avocado";
+    private static final String INGREDIENT_DARK_CHOCOLATE = "darkChocolate";
+    private static final String INGREDIENT_NOODLES = "noodles";
+    private static final String INGREDIENT_CARROT = "carrot";
+    private static final String INGREDIENT_ONION = "onion";
+    private static final String INGREDIENT_BERRIES = "berries";
+    private static final String INGREDIENT_YOGURT = "yogurt";
+    private static final String INGREDIENT_TUNA = "tuna";
+    private static final String INGREDIENT_ZUCCHINI = "zucchini";
+    private static final String INGREDIENT_PEPPER = "pepper";
+    private static final String INGREDIENT_LEMON = "lemon";   // <-- добавлено
 
     @Bean
     CommandLineRunner seedData(UserRepository userRepository,
@@ -87,6 +104,10 @@ public class DataInitializer {
                     "Fresh and warm salads for lunch and dinner"));
             categories.put(CATEGORY_DRAFTS, findOrCreateCategory(categoryRepository, "Lab Drafts",
                     "Temporary recipes for CRUD demos. Safe to delete before submission."));
+            categories.put(CATEGORY_GRILL, findOrCreateCategory(categoryRepository, "Grill",
+                    "Recipes for grilling vegetables, meat and seafood"));
+            categories.put(CATEGORY_VEGAN, findOrCreateCategory(categoryRepository, "Vegan",
+                    "Plant-based recipes — currently empty, safe to delete"));
 
             Map<String, Ingredient> ingredients = new LinkedHashMap<>();
             ingredients.put(INGREDIENT_BEET, createIngredient("Beet", ingredientRepository));
@@ -110,6 +131,21 @@ public class DataInitializer {
             ingredients.put(INGREDIENT_BANANA, createIngredient("Banana", ingredientRepository));
             ingredients.put(INGREDIENT_MILK, createIngredient("Milk", ingredientRepository));
             ingredients.put(INGREDIENT_HONEY, createIngredient("Honey", ingredientRepository));
+            ingredients.put(INGREDIENT_FLOUR, createIngredient("Flour", ingredientRepository));
+            ingredients.put(INGREDIENT_SUGAR, createIngredient("Sugar", ingredientRepository));
+            ingredients.put(INGREDIENT_BUTTER, createIngredient("Butter", ingredientRepository));
+            ingredients.put(INGREDIENT_SHRIMP, createIngredient("Shrimp", ingredientRepository));
+            ingredients.put(INGREDIENT_AVOCADO, createIngredient("Avocado", ingredientRepository));
+            ingredients.put(INGREDIENT_DARK_CHOCOLATE, createIngredient("Dark chocolate", ingredientRepository));
+            ingredients.put(INGREDIENT_NOODLES, createIngredient("Egg noodles", ingredientRepository));
+            ingredients.put(INGREDIENT_CARROT, createIngredient("Carrot", ingredientRepository));
+            ingredients.put(INGREDIENT_ONION, createIngredient("Onion", ingredientRepository));
+            ingredients.put(INGREDIENT_BERRIES, createIngredient("Mixed berries", ingredientRepository));
+            ingredients.put(INGREDIENT_YOGURT, createIngredient("Greek yogurt", ingredientRepository));
+            ingredients.put(INGREDIENT_TUNA, createIngredient("Canned tuna", ingredientRepository));
+            ingredients.put(INGREDIENT_ZUCCHINI, createIngredient("Zucchini", ingredientRepository));
+            ingredients.put(INGREDIENT_PEPPER, createIngredient("Bell pepper", ingredientRepository));
+            ingredients.put(INGREDIENT_LEMON, createIngredient("Lemon", ingredientRepository));
 
             createRecipeIfMissing(
                     recipeRepository,
@@ -220,6 +256,111 @@ public class DataInitializer {
                             "Slice the banana",
                             "Blend banana with milk",
                             "Add honey and blend again"
+                    )
+            );
+
+            createRecipeIfMissing(
+                    recipeRepository,
+                    "Classic Pancakes",
+                    "Fluffy pancakes for a perfect Sunday breakfast",
+                    users.get(USER_SOFIA),
+                    categories.get(CATEGORY_BREAKFASTS),
+                    List.of(ingredients.get(INGREDIENT_FLOUR), ingredients.get(INGREDIENT_MILK), ingredients.get(INGREDIENT_EGG), ingredients.get(INGREDIENT_SUGAR), ingredients.get(INGREDIENT_BUTTER)),
+                    List.of(
+                            "Mix dry ingredients in a bowl",
+                            "Whisk eggs with milk and melted butter",
+                            "Combine wet and dry ingredients",
+                            "Fry on a non-stick pan until golden"
+                    )
+            );
+
+            createRecipeIfMissing(
+                    recipeRepository,
+                    "Shrimp Caesar Salad",
+                    "Classic Caesar with grilled shrimps instead of chicken",
+                    users.get(USER_MAX),
+                    categories.get(CATEGORY_SALADS),
+                    List.of(ingredients.get(INGREDIENT_SHRIMP), ingredients.get(INGREDIENT_LETTUCE), ingredients.get(INGREDIENT_PARMESAN), ingredients.get(INGREDIENT_BREAD), ingredients.get(INGREDIENT_GARLIC)),
+                    List.of(
+                            "Marinate shrimps with garlic and olive oil",
+                            "Grill shrimps for 2 minutes per side",
+                            "Toast croutons",
+                            "Toss lettuce with dressing, top with shrimps and parmesan"
+                    )
+            );
+
+            createRecipeIfMissing(
+                    recipeRepository,
+                    "Chocolate Mousse",
+                    "Light and airy dark chocolate mousse",
+                    users.get(USER_ANNA),
+                    categories.get(CATEGORY_DESSERTS),
+                    List.of(ingredients.get(INGREDIENT_DARK_CHOCOLATE), ingredients.get(INGREDIENT_EGG), ingredients.get(INGREDIENT_SUGAR)),
+                    List.of(
+                            "Melt chocolate in a water bath",
+                            "Separate egg yolks from whites",
+                            "Whisk yolks with sugar, add to chocolate",
+                            "Beat egg whites until stiff, fold into chocolate mixture",
+                            "Chill for 2 hours before serving"
+                    )
+            );
+
+            createRecipeIfMissing(
+                    recipeRepository,
+                    "Chicken Noodle Soup",
+                    "Hearty soup with homemade egg noodles",
+                    users.get(USER_ANNA),
+                    categories.get(CATEGORY_SOUPS),
+                    List.of(ingredients.get(INGREDIENT_CHICKEN), ingredients.get(INGREDIENT_NOODLES), ingredients.get(INGREDIENT_CARROT), ingredients.get(INGREDIENT_ONION), ingredients.get(INGREDIENT_GARLIC)),
+                    List.of(
+                            "Simmer chicken with vegetables to make broth",
+                            "Remove chicken, shred meat",
+                            "Add noodles and cook until tender",
+                            "Return shredded chicken, season with salt and pepper"
+                    )
+            );
+
+            createRecipeIfMissing(
+                    recipeRepository,
+                    "Berry Yogurt Bowl",
+                    "Quick healthy breakfast with Greek yogurt and berries",
+                    users.get(USER_SOFIA),
+                    categories.get(CATEGORY_BREAKFASTS),
+                    List.of(ingredients.get(INGREDIENT_YOGURT), ingredients.get(INGREDIENT_BERRIES), ingredients.get(INGREDIENT_HONEY)),
+                    List.of(
+                            "Spoon yogurt into a bowl",
+                            "Top with mixed berries",
+                            "Drizzle with honey and serve"
+                    )
+            );
+
+            createRecipeIfMissing(
+                    recipeRepository,
+                    "Tuna Avocado Salad",
+                    "No-mayo tuna salad with avocado and cucumber",
+                    users.get(USER_NIKITA),
+                    categories.get(CATEGORY_SALADS),
+                    List.of(ingredients.get(INGREDIENT_TUNA), ingredients.get(INGREDIENT_AVOCADO), ingredients.get(INGREDIENT_CUCUMBER), ingredients.get(INGREDIENT_OLIVE_OIL), ingredients.get(INGREDIENT_LEMON)),
+                    List.of(
+                            "Drain tuna and flake with a fork",
+                            "Dice avocado and cucumber",
+                            "Mix all ingredients with olive oil and lemon juice",
+                            "Serve on lettuce leaves"
+                    )
+            );
+
+            createRecipeIfMissing(
+                    recipeRepository,
+                    "Grilled Vegetables",
+                    "Colorful zucchini and bell peppers on the grill",
+                    users.get(USER_MAX),
+                    categories.get(CATEGORY_GRILL),
+                    List.of(ingredients.get(INGREDIENT_ZUCCHINI), ingredients.get(INGREDIENT_PEPPER), ingredients.get(INGREDIENT_OLIVE_OIL), ingredients.get(INGREDIENT_GARLIC)),
+                    List.of(
+                            "Slice zucchini and bell peppers into thick pieces",
+                            "Brush with olive oil and minced garlic",
+                            "Grill on medium heat for 3-4 minutes per side",
+                            "Sprinkle with salt and serve warm"
                     )
             );
         });
