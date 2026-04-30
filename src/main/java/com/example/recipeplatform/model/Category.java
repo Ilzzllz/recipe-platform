@@ -29,7 +29,6 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // cascade и orphanRemoval убраны — удаление категории не должно удалять рецепты
     @OneToMany(mappedBy = "category")
     private List<Recipe> recipes = new ArrayList<>();
 }

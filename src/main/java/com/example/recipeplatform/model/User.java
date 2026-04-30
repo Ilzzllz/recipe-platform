@@ -32,7 +32,6 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
-    // cascade и orphanRemoval убраны — удаление пользователя не должно удалять рецепты
     @OneToMany(mappedBy = "author")
     private List<Recipe> recipes = new ArrayList<>();
 }
