@@ -68,7 +68,6 @@ public class RecipeService {
         this.recipeTransactionScenarioService = recipeTransactionScenarioService;
     }
 
-    // ---------- CRUD ----------
     @Transactional(readOnly = true)
     public List<RecipeDto> findAll() {
         return recipeMapper.toDtoList(recipeRepository.findAllWithFetchJoin());
@@ -105,7 +104,6 @@ public class RecipeService {
         recipeRepository.delete(recipe);
     }
 
-    // ---------- N+1 демо ----------
     @Transactional(readOnly = true)
     public NPlusOneDemoResponse demonstrateNPlusOneProblem() {
         Statistics statistics = statistics();
@@ -124,7 +122,6 @@ public class RecipeService {
         return buildNPlusOneResponse("Fetch join solution", recipes, statistics.getPrepareStatementCount());
     }
 
-    // ---------- Транзакционные демо (оба возвращают HTTP 500) ----------
     public TransactionDemoResponse demonstratePartialSaveWithoutTransactional() {
         String marker = buildMarker("plain");
         recipeTransactionScenarioService.saveWithoutTransactional(marker);
@@ -137,7 +134,6 @@ public class RecipeService {
         throw new IllegalStateException("Unreachable");
     }
 
-    // ---------- Приватные вспомогательные методы ----------
     private Recipe findDetailedRecipe(Long id) {
         return recipeRepository.findByIdWithFetchJoin(id)
                 .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
