@@ -14,6 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -122,5 +126,25 @@ public class RecipeController {
     public void delete(@Parameter(description = "Existing recipe id", example = "12")
                        @PathVariable Long id) {
         recipeService.delete(id);
+    }
+
+    @GetMapping("/filter/jpql")
+    @Operation(summary = "Filter recipes by author username (JPQL + pagination)",
+            description = "Uses JPQL query with JOIN FETCH. Pagination and in-memory cache are applied.")
+    public Page<RecipeDto> filterByAuthorJPQL(
+            @Parameter(description = "Author username (case-insensitive)", example = "anna")
+            @RequestParam String authorUsername,
+            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return recipeService.findByAuthorJPQL(authorUsername, pageable);
+    }
+
+    @GetMapping("/filter/native")
+    @Operation(summary = "Filter recipes by author username (native SQL + pagination)",
+            description = "Uses native SQL query with LIMIT/OFFSET. Pagination and in-memory cache are applied.")
+    public Page<RecipeDto> filterByAuthorNative(
+            @Parameter(description = "Author username (case-insensitive)", example = "anna")
+            @RequestParam String authorUsername,
+            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return recipeService.findByAuthorNative(authorUsername, pageable);
     }
 }

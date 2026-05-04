@@ -1,8 +1,10 @@
 package com.example.recipeplatform.service;
 
+import com.example.recipeplatform.cache.CacheKey;
+import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.NPlusOneDemoResponse;
-import com.example.recipeplatform.dto.RecipeDto;
 import com.example.recipeplatform.dto.RecipeCreateDto;
+import com.example.recipeplatform.dto.RecipeDto;
 import com.example.recipeplatform.dto.RecipeStepCreateDto;
 import com.example.recipeplatform.dto.TransactionDemoResponse;
 import com.example.recipeplatform.exception.NotFoundException;
@@ -22,13 +24,14 @@ import com.example.recipeplatform.repository.UserRepository;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class RecipeService {
@@ -47,6 +50,7 @@ public class RecipeService {
     private final CookingStepMapper cookingStepMapper;
     private final EntityManagerFactory entityManagerFactory;
     private final RecipeTransactionScenarioService recipeTransactionScenarioService;
+    private final RecipeQueryCacheService recipeQueryCacheService;
 
     public RecipeService(RecipeRepository recipeRepository,
                          UserRepository userRepository,
@@ -56,7 +60,8 @@ public class RecipeService {
                          RecipeMapper recipeMapper,
                          CookingStepMapper cookingStepMapper,
                          EntityManagerFactory entityManagerFactory,
-                         RecipeTransactionScenarioService recipeTransactionScenarioService) {
+                         RecipeTransactionScenarioService recipeTransactionScenarioService,
+                         RecipeQueryCacheService recipeQueryCacheService) {
         this.recipeRepository = recipeRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
@@ -66,6 +71,7 @@ public class RecipeService {
         this.cookingStepMapper = cookingStepMapper;
         this.entityManagerFactory = entityManagerFactory;
         this.recipeTransactionScenarioService = recipeTransactionScenarioService;
+        this.recipeQueryCacheService = recipeQueryCacheService;
     }
 
     @Transactional(readOnly = true)
@@ -87,14 +93,18 @@ public class RecipeService {
     public RecipeDto create(RecipeCreateDto request) {
         Recipe recipe = recipeMapper.toEntity(request);
         applyRequest(recipe, request);
-        return recipeMapper.toDto(recipeRepository.save(recipe));
+        RecipeDto result = recipeMapper.toDto(recipeRepository.save(recipe));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
     public RecipeDto update(Long id, RecipeCreateDto request) {
         Recipe recipe = findDetailedRecipe(id);
         applyRequest(recipe, request);
-        return recipeMapper.toDto(recipeRepository.save(recipe));
+        RecipeDto result = recipeMapper.toDto(recipeRepository.save(recipe));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
@@ -102,6 +112,7 @@ public class RecipeService {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(RECIPE_WITH_ID_PREFIX + id + NOT_FOUND_SUFFIX));
         recipeRepository.delete(recipe);
+        recipeQueryCacheService.invalidateAll();
     }
 
     @Transactional(readOnly = true)
@@ -128,10 +139,36 @@ public class RecipeService {
         throw new IllegalStateException("Unreachable");
     }
 
-    public TransactionDemoResponse demonstrateRollbackWithTransactional() {
+    public void demonstrateRollbackWithTransactional() {
         String marker = buildMarker("tx");
         recipeTransactionScenarioService.saveWithTransactional(marker);
         throw new IllegalStateException("Unreachable");
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RecipeDto> findByAuthorJPQL(String authorUsername, Pageable pageable) {
+        CacheKey key = CacheKey.from(authorUsername, pageable);
+        Page<RecipeDto> cached = recipeQueryCacheService.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        Page<Recipe> recipePage = recipeRepository.findByAuthorUsernameJPQL(authorUsername, pageable);
+        Page<RecipeDto> dtoPage = recipePage.map(recipeMapper::toDto);
+        recipeQueryCacheService.put(key, dtoPage);
+        return dtoPage;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RecipeDto> findByAuthorNative(String authorUsername, Pageable pageable) {
+        CacheKey key = CacheKey.from(authorUsername, pageable);
+        Page<RecipeDto> cached = recipeQueryCacheService.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        Page<Recipe> recipePage = recipeRepository.findByAuthorUsernameNative(authorUsername, pageable);
+        Page<RecipeDto> dtoPage = recipePage.map(recipeMapper::toDto);
+        recipeQueryCacheService.put(key, dtoPage);
+        return dtoPage;
     }
 
     private Recipe findDetailedRecipe(Long id) {

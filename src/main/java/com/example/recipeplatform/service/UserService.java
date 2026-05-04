@@ -1,5 +1,6 @@
 package com.example.recipeplatform.service;
 
+import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.UserCreateDto;
 import com.example.recipeplatform.dto.UserDto;
 import com.example.recipeplatform.exception.NotFoundException;
@@ -24,10 +25,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final RecipeQueryCacheService recipeQueryCacheService;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, UserMapper userMapper,
+                       RecipeQueryCacheService recipeQueryCacheService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.recipeQueryCacheService = recipeQueryCacheService;
     }
 
     @Transactional(readOnly = true)
@@ -54,9 +58,14 @@ public class UserService {
     @Transactional
     public UserDto update(Long id, UserCreateDto dto) {
         User user = findEntity(id);
+        String oldUsername = user.getUsername();
         validateUniqueFields(id, dto);
         userMapper.updateEntity(user, dto);
-        return userMapper.toDto(userRepository.save(user));
+        UserDto result = userMapper.toDto(userRepository.save(user));
+        if (!oldUsername.equalsIgnoreCase(dto.getUsername())) {
+            recipeQueryCacheService.invalidateAll();
+        }
+        return result;
     }
 
     @Transactional
@@ -66,6 +75,7 @@ public class UserService {
             throw new IllegalArgumentException(USER_NOT_EMPTY);
         }
         userRepository.delete(user);
+        recipeQueryCacheService.invalidateAll();
     }
 
     private User findEntity(Long id) {
