@@ -1,5 +1,6 @@
 package com.example.recipeplatform.service;
 
+import com.example.recipeplatform.dto.TransactionTestRequestDto;
 import com.example.recipeplatform.exception.TransactionDemoException;
 import com.example.recipeplatform.model.Category;
 import com.example.recipeplatform.model.Ingredient;
@@ -11,6 +12,9 @@ import com.example.recipeplatform.repository.RecipeRepository;
 import com.example.recipeplatform.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.Set;
 
 @Service
 public class RecipeTransactionScenarioService {
@@ -30,20 +34,20 @@ public class RecipeTransactionScenarioService {
         this.recipeRepository = recipeRepository;
     }
 
-    public void saveWithoutTransactional(String marker) {
+    public void saveWithoutTransactional(TransactionTestRequestDto dto, String marker) {
         User user = new User();
-        user.setUsername(marker + "_author");
-        user.setEmail(marker + "@lab.local");
-        user.setBio("Created for transaction demo (no tx)");
+        user.setUsername(dto.getUserUsername() + "_" + marker);
+        user.setEmail(dto.getUserEmail() + "_" + marker + "@demo.local");
+        user.setBio(dto.getUserBio() != null ? dto.getUserBio() : "Created for transaction demo (no tx)");
         userRepository.saveAndFlush(user);
 
         Category category = new Category();
-        category.setName(marker + "_category");
-        category.setDescription("Created for transaction demo (no tx)");
+        category.setName(dto.getCategoryName() + "_" + marker);
+        category.setDescription(dto.getCategoryDescription() != null ? dto.getCategoryDescription() : "Created for transaction demo (no tx)");
         categoryRepository.saveAndFlush(category);
 
         Ingredient ingredient = new Ingredient();
-        ingredient.setName(marker + "_ingredient");
+        ingredient.setName(dto.getIngredientName() + "_" + marker);
         ingredientRepository.saveAndFlush(ingredient);
 
         throw new TransactionDemoException("Without @Transactional", marker,
@@ -51,28 +55,28 @@ public class RecipeTransactionScenarioService {
     }
 
     @Transactional
-    public void saveWithTransactional(String marker) {
+    public void saveWithTransactional(TransactionTestRequestDto dto, String marker) {
         User user = new User();
-        user.setUsername(marker + "_author");
-        user.setEmail(marker + "@lab.local");
-        user.setBio("Created for transaction demo (with tx)");
+        user.setUsername(dto.getUserUsername() + "_" + marker);
+        user.setEmail(dto.getUserEmail() + "_" + marker + "@demo.local");
+        user.setBio(dto.getUserBio() != null ? dto.getUserBio() : "Created for transaction demo (with tx)");
         userRepository.save(user);
 
         Category category = new Category();
-        category.setName(marker + "_category");
-        category.setDescription("Created for transaction demo (with tx)");
+        category.setName(dto.getCategoryName() + "_" + marker);
+        category.setDescription(dto.getCategoryDescription() != null ? dto.getCategoryDescription() : "Created for transaction demo (with tx)");
         categoryRepository.save(category);
 
         Ingredient ingredient = new Ingredient();
-        ingredient.setName(marker + "_ingredient");
+        ingredient.setName(dto.getIngredientName() + "_" + marker);
         ingredientRepository.save(ingredient);
 
         Recipe recipe = new Recipe();
-        recipe.setTitle(marker + "_recipe");
-        recipe.setDescription("This recipe will be rolled back");
+        recipe.setTitle(dto.getRecipeTitle() + "_" + marker);
+        recipe.setDescription(dto.getRecipeDescription() != null ? dto.getRecipeDescription() : "This recipe will be rolled back");
         recipe.setAuthor(user);
         recipe.setCategory(category);
-        recipe.replaceIngredients(java.util.Set.of(ingredient));
+        recipe.replaceIngredients(Set.of(ingredient));
         recipeRepository.save(recipe);
 
         throw new TransactionDemoException("With @Transactional", marker,

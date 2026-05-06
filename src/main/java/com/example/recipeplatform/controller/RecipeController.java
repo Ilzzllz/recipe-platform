@@ -1,9 +1,6 @@
 package com.example.recipeplatform.controller;
 
-import com.example.recipeplatform.dto.NPlusOneDemoResponse;
-import com.example.recipeplatform.dto.RecipeCreateDto;
-import com.example.recipeplatform.dto.RecipeDto;
-import com.example.recipeplatform.dto.TransactionDemoResponse;
+import com.example.recipeplatform.dto.*;
 import com.example.recipeplatform.exception.ApiError;
 import com.example.recipeplatform.service.RecipeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,22 +76,21 @@ public class RecipeController {
 
     @PostMapping("/transactions/without-transactional")
     @Operation(summary = "Demonstrate partial save without @Transactional",
-            description = "This endpoint intentionally triggers a failure after saving related data. Because there is no transaction, part of the data remains in the database.")
+            description = "Принимает JSON с данными для создания User, Category, Ingredient. Сохраняет их, затем вызывает ошибку. Рецепт не создаётся, но первые три сущности остаются в БД.")
     @ApiResponse(responseCode = "200", description = "Partial save demo completed",
             content = @Content(schema = @Schema(implementation = TransactionDemoResponse.class)))
-    public TransactionDemoResponse demonstratePartialSave() {
-        return recipeService.demonstratePartialSaveWithoutTransactional();
+    public TransactionDemoResponse demonstratePartialSave(@Valid @RequestBody TransactionTestRequestDto request) {
+        return recipeService.demonstratePartialSaveWithoutTransactional(request);
     }
 
     @PostMapping("/transactions/with-transactional")
     @Operation(summary = "Demonstrate rollback with @Transactional",
-            description = "This endpoint intentionally throws an error. Because the method is transactional, all inserted data is rolled back.")
+            description = "Принимает JSON с данными для создания User, Category, Ingredient и Recipe. Всё сохраняется в транзакции, после чего вызывается ошибка. Все данные откатываются.")
     @ApiResponse(responseCode = "500", description = "Intentional rollback demo error",
             content = @Content(schema = @Schema(implementation = TransactionDemoResponse.class)))
-    public void demonstrateRollback() {
-        recipeService.demonstrateRollbackWithTransactional();
+    public TransactionDemoResponse demonstrateRollback(@Valid @RequestBody TransactionTestRequestDto request) {
+        return recipeService.demonstrateRollbackWithTransactional(request);
     }
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new recipe")

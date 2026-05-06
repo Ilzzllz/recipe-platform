@@ -2,11 +2,7 @@ package com.example.recipeplatform.service;
 
 import com.example.recipeplatform.cache.CacheKey;
 import com.example.recipeplatform.cache.RecipeQueryCacheService;
-import com.example.recipeplatform.dto.NPlusOneDemoResponse;
-import com.example.recipeplatform.dto.RecipeCreateDto;
-import com.example.recipeplatform.dto.RecipeDto;
-import com.example.recipeplatform.dto.RecipeStepCreateDto;
-import com.example.recipeplatform.dto.TransactionDemoResponse;
+import com.example.recipeplatform.dto.*;
 import com.example.recipeplatform.exception.NotFoundException;
 import com.example.recipeplatform.exception.TransactionDemoException;
 import com.example.recipeplatform.mapper.CookingStepMapper;
@@ -136,15 +132,15 @@ public class RecipeService {
         return buildNPlusOneResponse("Fetch join solution", recipes, statistics.getPrepareStatementCount());
     }
 
-    public TransactionDemoResponse demonstratePartialSaveWithoutTransactional() {
+    public TransactionDemoResponse demonstratePartialSaveWithoutTransactional(TransactionTestRequestDto request) {
         String marker = buildMarker("plain");
-        recipeTransactionScenarioService.saveWithoutTransactional(marker);
+        recipeTransactionScenarioService.saveWithoutTransactional(request, marker);
         throw new IllegalStateException("Unreachable");
     }
 
-    public void demonstrateRollbackWithTransactional() {
+    public TransactionDemoResponse demonstrateRollbackWithTransactional(TransactionTestRequestDto request) {
         String marker = buildMarker("tx");
-        recipeTransactionScenarioService.saveWithTransactional(marker);
+        recipeTransactionScenarioService.saveWithTransactional(request, marker);
         throw new IllegalStateException("Unreachable");
     }
 
