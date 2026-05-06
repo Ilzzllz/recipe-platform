@@ -19,16 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -130,11 +122,11 @@ public class RecipeController {
 
     @GetMapping("/filter/jpql")
     @Operation(summary = "Filter recipes by author username (JPQL + pagination)",
-            description = "Uses JPQL query with JOIN FETCH. Pagination and in-memory cache are applied.")
+            description = "Uses JPQL query with two-step loading. Pagination and in-memory cache are applied.")
     public Page<RecipeDto> filterByAuthorJPQL(
             @Parameter(description = "Author username (case-insensitive)", example = "anna")
             @RequestParam String authorUsername,
-            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return recipeService.findByAuthorJPQL(authorUsername, pageable);
     }
 
@@ -144,7 +136,7 @@ public class RecipeController {
     public Page<RecipeDto> filterByAuthorNative(
             @Parameter(description = "Author username (case-insensitive)", example = "anna")
             @RequestParam String authorUsername,
-            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return recipeService.findByAuthorNative(authorUsername, pageable);
     }
 }

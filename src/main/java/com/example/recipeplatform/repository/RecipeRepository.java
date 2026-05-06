@@ -47,23 +47,23 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     long countByTitleStartingWith(String prefix);
 
-    @Query(value = """
+    @Query("SELECT r.id FROM Recipe r JOIN r.author a WHERE LOWER(a.username) = LOWER(:authorUsername)")
+    Page<Long> findRecipeIdsByAuthorUsername(@Param("authorUsername") String authorUsername, Pageable pageable);
+
+    @Query("""
             SELECT DISTINCT r FROM Recipe r
-            JOIN FETCH r.author a
-            JOIN FETCH r.category c
-            LEFT JOIN FETCH r.ingredients i
-            LEFT JOIN FETCH r.steps s
-            WHERE LOWER(a.username) = LOWER(:authorUsername)
-            """,
-            countQuery = "SELECT COUNT(r) FROM Recipe r JOIN r.author a WHERE LOWER(a.username) = LOWER(:authorUsername)")
-    Page<Recipe> findByAuthorUsernameJPQL(@Param("authorUsername") String authorUsername, Pageable pageable);
+            LEFT JOIN FETCH r.author
+            LEFT JOIN FETCH r.category
+            LEFT JOIN FETCH r.ingredients
+            LEFT JOIN FETCH r.steps
+            WHERE r.id IN :ids
+            """)
+    List<Recipe> findAllWithFetchByIds(@Param("ids") List<Long> ids);
 
     @Query(value = """
             SELECT r.* FROM recipes r
             JOIN users u ON r.author_id = u.id
             WHERE LOWER(u.username) = LOWER(:authorUsername)
-            ORDER BY r.id
-            LIMIT :limit OFFSET :offset
             """,
             countQuery = """
             SELECT COUNT(*) FROM recipes r

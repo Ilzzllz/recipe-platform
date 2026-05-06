@@ -25,13 +25,18 @@ import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class RecipeService {
@@ -119,7 +124,6 @@ public class RecipeService {
     public NPlusOneDemoResponse demonstrateNPlusOneProblem() {
         Statistics statistics = statistics();
         statistics.clear();
-
         List<RecipeDto> recipes = recipeMapper.toDtoList(recipeRepository.findAll());
         return buildNPlusOneResponse("N+1 problem", recipes, statistics.getPrepareStatementCount());
     }
@@ -128,7 +132,6 @@ public class RecipeService {
     public NPlusOneDemoResponse demonstrateNPlusOneSolution() {
         Statistics statistics = statistics();
         statistics.clear();
-
         List<RecipeDto> recipes = recipeMapper.toDtoList(recipeRepository.findAllWithFetchJoin());
         return buildNPlusOneResponse("Fetch join solution", recipes, statistics.getPrepareStatementCount());
     }
@@ -148,19 +151,39 @@ public class RecipeService {
     @Transactional(readOnly = true)
     public Page<RecipeDto> findByAuthorJPQL(String authorUsername, Pageable pageable) {
         CacheKey key = CacheKey.from(authorUsername, pageable);
+        @SuppressWarnings("unchecked")
         Page<RecipeDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
             return cached;
         }
-        Page<Recipe> recipePage = recipeRepository.findByAuthorUsernameJPQL(authorUsername, pageable);
-        Page<RecipeDto> dtoPage = recipePage.map(recipeMapper::toDto);
-        recipeQueryCacheService.put(key, dtoPage);
-        return dtoPage;
+
+        Page<Long> idsPage = recipeRepository.findRecipeIdsByAuthorUsername(authorUsername, pageable);
+        if (idsPage.isEmpty()) {
+            Page<RecipeDto> empty = Page.empty(pageable);
+            recipeQueryCacheService.put(key, empty);
+            return empty;
+        }
+
+        List<Recipe> recipes = recipeRepository.findAllWithFetchByIds(idsPage.getContent());
+        Map<Long, Recipe> recipeMap = new LinkedHashMap<>();
+        for (Recipe recipe : recipes) {
+            recipeMap.put(recipe.getId(), recipe);
+        }
+        List<RecipeDto> orderedRecipeDtos = idsPage.getContent().stream()
+                .map(recipeMap::get)
+                .filter(Objects::nonNull)
+                .map(recipeMapper::toDto)
+                .collect(Collectors.toList());
+
+        Page<RecipeDto> result = new PageImpl<>(orderedRecipeDtos, pageable, idsPage.getTotalElements());
+        recipeQueryCacheService.put(key, result);
+        return result;
     }
 
     @Transactional(readOnly = true)
     public Page<RecipeDto> findByAuthorNative(String authorUsername, Pageable pageable) {
         CacheKey key = CacheKey.from(authorUsername, pageable);
+        @SuppressWarnings("unchecked")
         Page<RecipeDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
             return cached;
@@ -182,11 +205,9 @@ public class RecipeService {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new NotFoundException(CATEGORY_WITH_ID_PREFIX + request.getCategoryId() + NOT_FOUND_SUFFIX));
         List<Ingredient> ingredients = ingredientRepository.findAllById(request.getIngredientIds());
-
         if (ingredients.size() != request.getIngredientIds().size()) {
             throw new NotFoundException("One or more ingredients were not found");
         }
-
         recipeMapper.updateEntity(recipe, request);
         recipe.setAuthor(author);
         recipe.setCategory(category);
