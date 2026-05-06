@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -50,13 +51,15 @@ public class GlobalExceptionHandler {
         response.setScenario(exception.getScenario());
         response.setMarker(exception.getMarker());
         response.setMessage(exception.getMessage());
-        response.setPersistedRecords(Map.of(
-                "users", userRepository.countByUsernameStartingWith(exception.getMarker()),
-                "categories", categoryRepository.countByNameStartingWith(exception.getMarker()),
-                "ingredients", ingredientRepository.countByNameStartingWith(exception.getMarker()),
-                "recipes", recipeRepository.countByTitleStartingWith(exception.getMarker()),
-                "cookingSteps", cookingStepRepository.countByDescriptionStartingWith(exception.getMarker())
-        ));
+
+        Map<String, Long> persistedRecords = new LinkedHashMap<>();
+        persistedRecords.put("users", userRepository.countByUsernameStartingWith(exception.getMarker()));
+        persistedRecords.put("categories", categoryRepository.countByNameStartingWith(exception.getMarker()));
+        persistedRecords.put("ingredients", ingredientRepository.countByNameStartingWith(exception.getMarker()));
+        persistedRecords.put("recipes", recipeRepository.countByTitleStartingWith(exception.getMarker()));
+        persistedRecords.put("cookingSteps", cookingStepRepository.countByDescriptionStartingWith(exception.getMarker()));
+        response.setPersistedRecords(persistedRecords);
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
