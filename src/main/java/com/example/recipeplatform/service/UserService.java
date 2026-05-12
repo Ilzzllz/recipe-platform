@@ -52,19 +52,18 @@ public class UserService {
         if (userRepository.existsByEmailIgnoreCase(dto.getEmail())) {
             throw new IllegalArgumentException(EMAIL_ALREADY_EXISTS);
         }
-        return userMapper.toDto(userRepository.save(userMapper.toEntity(dto)));
+        UserDto result = userMapper.toDto(userRepository.save(userMapper.toEntity(dto)));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
     public UserDto update(Long id, UserCreateDto dto) {
         User user = findEntity(id);
-        String oldUsername = user.getUsername();
         validateUniqueFields(id, dto);
         userMapper.updateEntity(user, dto);
         UserDto result = userMapper.toDto(userRepository.save(user));
-        if (!oldUsername.equalsIgnoreCase(dto.getUsername())) {
-            recipeQueryCacheService.invalidateAll();
-        }
+        recipeQueryCacheService.invalidateAll();
         return result;
     }
 

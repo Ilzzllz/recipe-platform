@@ -134,8 +134,12 @@ public class RecipeService {
 
     public TransactionDemoResponse demonstratePartialSaveWithoutTransactional(TransactionTestRequestDto request) {
         String marker = buildMarker("plain");
-        recipeTransactionScenarioService.saveWithoutTransactional(request, marker);
-        throw new IllegalStateException("Unreachable");
+        try {
+            recipeTransactionScenarioService.saveWithoutTransactional(request, marker);
+            throw new IllegalStateException("Partial save demo should always end with an intentional failure");
+        } catch (TransactionDemoException exception) {
+            return buildTransactionDemoResponse(exception.getScenario(), exception.getMarker(), exception.getMessage());
+        }
     }
 
     public TransactionDemoResponse demonstrateRollbackWithTransactional(TransactionTestRequestDto request) {
@@ -146,48 +150,28 @@ public class RecipeService {
 
     @Transactional(readOnly = true)
     public Page<RecipeDto> findByAuthorJPQL(String authorUsername, Pageable pageable) {
-        CacheKey key = CacheKey.from(authorUsername, pageable);
-        @SuppressWarnings("unchecked")
+        CacheKey key = CacheKey.from("jpql", authorUsername, pageable);
         Page<RecipeDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
             return cached;
         }
-
-        Page<Long> idsPage = recipeRepository.findRecipeIdsByAuthorUsername(authorUsername, pageable);
-        if (idsPage.isEmpty()) {
-            Page<RecipeDto> empty = Page.empty(pageable);
-            recipeQueryCacheService.put(key, empty);
-            return empty;
-        }
-
-        List<Recipe> recipes = recipeRepository.findAllWithFetchByIds(idsPage.getContent());
-        Map<Long, Recipe> recipeMap = new LinkedHashMap<>();
-        for (Recipe recipe : recipes) {
-            recipeMap.put(recipe.getId(), recipe);
-        }
-        List<RecipeDto> orderedRecipeDtos = idsPage.getContent().stream()
-                .map(recipeMap::get)
-                .filter(Objects::nonNull)
-                .map(recipeMapper::toDto)
-                .collect(Collectors.toList());
-
-        Page<RecipeDto> result = new PageImpl<>(orderedRecipeDtos, pageable, idsPage.getTotalElements());
+        Page<RecipeDto> result = buildFilteredPage(recipeRepository.findRecipeIdsByAuthorUsername(authorUsername, pageable),
+                pageable);
         recipeQueryCacheService.put(key, result);
         return result;
     }
 
     @Transactional(readOnly = true)
     public Page<RecipeDto> findByAuthorNative(String authorUsername, Pageable pageable) {
-        CacheKey key = CacheKey.from(authorUsername, pageable);
-        @SuppressWarnings("unchecked")
+        CacheKey key = CacheKey.from("native", authorUsername, pageable);
         Page<RecipeDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
             return cached;
         }
-        Page<Recipe> recipePage = recipeRepository.findByAuthorUsernameNative(authorUsername, pageable);
-        Page<RecipeDto> dtoPage = recipePage.map(recipeMapper::toDto);
-        recipeQueryCacheService.put(key, dtoPage);
-        return dtoPage;
+        Page<RecipeDto> result = buildFilteredPage(
+                recipeRepository.findRecipeIdsByAuthorUsernameNative(authorUsername, pageable), pageable);
+        recipeQueryCacheService.put(key, result);
+        return result;
     }
 
     private Recipe findDetailedRecipe(Long id) {
@@ -217,6 +201,23 @@ public class RecipeService {
                 .toList();
     }
 
+    private Page<RecipeDto> buildFilteredPage(Page<Long> idsPage, Pageable pageable) {
+        if (idsPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<Recipe> recipes = recipeRepository.findAllWithFetchByIds(idsPage.getContent());
+        Map<Long, Recipe> recipeMap = new LinkedHashMap<>();
+        for (Recipe recipe : recipes) {
+            recipeMap.put(recipe.getId(), recipe);
+        }
+        List<RecipeDto> orderedRecipeDtos = idsPage.getContent().stream()
+                .map(recipeMap::get)
+                .filter(Objects::nonNull)
+                .map(recipeMapper::toDto)
+                .collect(Collectors.toList());
+        return new PageImpl<>(orderedRecipeDtos, pageable, idsPage.getTotalElements());
+    }
+
     private NPlusOneDemoResponse buildNPlusOneResponse(String scenario,
                                                        List<RecipeDto> recipes,
                                                        long statementCount) {
@@ -230,6 +231,23 @@ public class RecipeService {
 
     private String buildMarker(String scenario) {
         return "demo_" + scenario + "_" + Instant.now().toEpochMilli();
+    }
+
+    private TransactionDemoResponse buildTransactionDemoResponse(String scenario,
+                                                                 String marker,
+                                                                 String message) {
+        TransactionDemoResponse response = new TransactionDemoResponse();
+        response.setScenario(scenario);
+        response.setMarker(marker);
+        response.setMessage(message);
+        response.setPersistedRecords(Map.of(
+                "users", userRepository.countByUsernameStartingWith(marker),
+                "categories", categoryRepository.countByNameStartingWith(marker),
+                "ingredients", ingredientRepository.countByNameStartingWith(marker),
+                "recipes", recipeRepository.countByTitleStartingWith(marker),
+                "cookingSteps", cookingStepRepository.countByDescriptionStartingWith(marker)
+        ));
+        return response;
     }
 
     private Statistics statistics() {

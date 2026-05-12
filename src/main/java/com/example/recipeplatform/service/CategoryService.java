@@ -1,5 +1,6 @@
 package com.example.recipeplatform.service;
 
+import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.CategoryCreateDto;
 import com.example.recipeplatform.dto.CategoryDto;
 import com.example.recipeplatform.exception.NotFoundException;
@@ -23,10 +24,14 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
+    private final RecipeQueryCacheService recipeQueryCacheService;
 
-    public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
+    public CategoryService(CategoryRepository categoryRepository,
+                           CategoryMapper categoryMapper,
+                           RecipeQueryCacheService recipeQueryCacheService) {
         this.categoryRepository = categoryRepository;
         this.categoryMapper = categoryMapper;
+        this.recipeQueryCacheService = recipeQueryCacheService;
     }
 
     @Transactional(readOnly = true)
@@ -44,7 +49,9 @@ public class CategoryService {
         if (categoryRepository.existsByNameIgnoreCase(dto.getName())) {
             throw new IllegalArgumentException(CATEGORY_ALREADY_EXISTS);
         }
-        return categoryMapper.toDto(categoryRepository.save(categoryMapper.toEntity(dto)));
+        CategoryDto result = categoryMapper.toDto(categoryRepository.save(categoryMapper.toEntity(dto)));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
@@ -56,7 +63,9 @@ public class CategoryService {
                     throw new IllegalArgumentException(CATEGORY_ALREADY_EXISTS);
                 });
         categoryMapper.updateEntity(category, dto);
-        return categoryMapper.toDto(categoryRepository.save(category));
+        CategoryDto result = categoryMapper.toDto(categoryRepository.save(category));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
@@ -66,6 +75,7 @@ public class CategoryService {
             throw new IllegalArgumentException(CATEGORY_NOT_EMPTY);
         }
         categoryRepository.delete(category);
+        recipeQueryCacheService.invalidateAll();
     }
 
     private Category findEntity(Long id) {

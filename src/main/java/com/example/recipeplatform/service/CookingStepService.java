@@ -1,5 +1,6 @@
 package com.example.recipeplatform.service;
 
+import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.CookingStepDto;
 import com.example.recipeplatform.dto.CookingStepCreateDto;
 import com.example.recipeplatform.exception.NotFoundException;
@@ -25,13 +26,16 @@ public class CookingStepService {
     private final CookingStepRepository cookingStepRepository;
     private final RecipeRepository recipeRepository;
     private final CookingStepMapper cookingStepMapper;
+    private final RecipeQueryCacheService recipeQueryCacheService;
 
     public CookingStepService(CookingStepRepository cookingStepRepository,
                               RecipeRepository recipeRepository,
-                              CookingStepMapper cookingStepMapper) {
+                              CookingStepMapper cookingStepMapper,
+                              RecipeQueryCacheService recipeQueryCacheService) {
         this.cookingStepRepository = cookingStepRepository;
         this.recipeRepository = recipeRepository;
         this.cookingStepMapper = cookingStepMapper;
+        this.recipeQueryCacheService = recipeQueryCacheService;
     }
 
     @Transactional(readOnly = true)
@@ -49,7 +53,9 @@ public class CookingStepService {
         Recipe recipe = findRecipe(resolveRecipeId(request));
         CookingStep step = cookingStepMapper.toEntity(request);
         step.setRecipe(recipe);
-        return cookingStepMapper.toDto(cookingStepRepository.save(step));
+        CookingStepDto result = cookingStepMapper.toDto(cookingStepRepository.save(step));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
@@ -58,12 +64,15 @@ public class CookingStepService {
         Recipe recipe = findRecipe(resolveRecipeId(request));
         cookingStepMapper.updateEntity(step, request);
         step.setRecipe(recipe);
-        return cookingStepMapper.toDto(cookingStepRepository.save(step));
+        CookingStepDto result = cookingStepMapper.toDto(cookingStepRepository.save(step));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
     public void delete(Long id) {
         cookingStepRepository.delete(findStep(id));
+        recipeQueryCacheService.invalidateAll();
     }
 
     private CookingStep findStep(Long id) {

@@ -1,25 +1,26 @@
 package com.example.recipeplatform.cache;
 
+import com.example.recipeplatform.dto.RecipeDto;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class RecipeQueryCacheService {
 
-    private final ConcurrentHashMap<CacheKey, Page<?>> cache = new ConcurrentHashMap<>();
+    private final Map<CacheKey, Page<RecipeDto>> cache = new HashMap<>();
 
-    @SuppressWarnings("unchecked")
-    public <T> Page<T> get(CacheKey key) {
-        return (Page<T>) cache.get(key);
+    public synchronized Page<RecipeDto> get(CacheKey key) {
+        return cache.get(key);
     }
 
-    public <T> void put(CacheKey key, Page<T> page) {
+    public synchronized void put(CacheKey key, Page<RecipeDto> page) {
         cache.put(key, page);
     }
 
-    public void invalidateAll() {
+    public synchronized void invalidateAll() {
         cache.clear();
     }
 }

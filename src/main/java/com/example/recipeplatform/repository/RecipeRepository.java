@@ -61,9 +61,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     List<Recipe> findAllWithFetchByIds(@Param("ids") List<Long> ids);
 
     @Query(value = """
-            SELECT r.* FROM recipes r
+            SELECT r.id FROM recipes r
             JOIN users u ON r.author_id = u.id
             WHERE LOWER(u.username) = LOWER(:authorUsername)
+            ORDER BY r.id
             """,
             countQuery = """
             SELECT COUNT(*) FROM recipes r
@@ -71,6 +72,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             WHERE LOWER(u.username) = LOWER(:authorUsername)
             """,
             nativeQuery = true)
-    Page<Recipe> findByAuthorUsernameNative(@Param("authorUsername") String authorUsername,
-                                            Pageable pageable);
+    Page<Long> findRecipeIdsByAuthorUsernameNative(@Param("authorUsername") String authorUsername,
+                                                   Pageable pageable);
 }

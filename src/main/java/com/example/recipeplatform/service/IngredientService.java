@@ -1,5 +1,6 @@
 package com.example.recipeplatform.service;
 
+import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.IngredientCreateDto;
 import com.example.recipeplatform.dto.IngredientDto;
 import com.example.recipeplatform.exception.NotFoundException;
@@ -25,10 +26,14 @@ public class IngredientService {
 
     private final IngredientRepository ingredientRepository;
     private final IngredientMapper ingredientMapper;
+    private final RecipeQueryCacheService recipeQueryCacheService;
 
-    public IngredientService(IngredientRepository ingredientRepository, IngredientMapper ingredientMapper) {
+    public IngredientService(IngredientRepository ingredientRepository,
+                             IngredientMapper ingredientMapper,
+                             RecipeQueryCacheService recipeQueryCacheService) {
         this.ingredientRepository = ingredientRepository;
         this.ingredientMapper = ingredientMapper;
+        this.recipeQueryCacheService = recipeQueryCacheService;
     }
 
     @Transactional(readOnly = true)
@@ -46,7 +51,9 @@ public class IngredientService {
         if (ingredientRepository.existsByNameIgnoreCase(dto.getName())) {
             throw new IllegalArgumentException(INGREDIENT_ALREADY_EXISTS);
         }
-        return ingredientMapper.toDto(ingredientRepository.save(ingredientMapper.toEntity(dto)));
+        IngredientDto result = ingredientMapper.toDto(ingredientRepository.save(ingredientMapper.toEntity(dto)));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
@@ -58,7 +65,9 @@ public class IngredientService {
                     throw new IllegalArgumentException(INGREDIENT_ALREADY_EXISTS);
                 });
         ingredientMapper.updateEntity(ingredient, dto);
-        return ingredientMapper.toDto(ingredientRepository.save(ingredient));
+        IngredientDto result = ingredientMapper.toDto(ingredientRepository.save(ingredient));
+        recipeQueryCacheService.invalidateAll();
+        return result;
     }
 
     @Transactional
@@ -70,6 +79,7 @@ public class IngredientService {
         }
         ingredient.getRecipes().clear();
         ingredientRepository.delete(ingredient);
+        recipeQueryCacheService.invalidateAll();
     }
 
     private Ingredient findEntity(Long id) {
