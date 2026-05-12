@@ -1,7 +1,6 @@
 package com.example.recipeplatform.cache;
 
 import org.springframework.data.domain.Sort;
-
 import java.util.Objects;
 
 public record CacheKey(String authorUsername,
