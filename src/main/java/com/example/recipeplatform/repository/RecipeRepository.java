@@ -1,6 +1,7 @@
 package com.example.recipeplatform.repository;
 
 import com.example.recipeplatform.model.Recipe;
+import com.example.recipeplatform.repository.projection.RecipeFilterProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -47,31 +48,48 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     long countByTitleStartingWith(String prefix);
 
-    @Query("SELECT r.id FROM Recipe r JOIN r.author a WHERE LOWER(a.username) = LOWER(:authorUsername)")
-    Page<Long> findRecipeIdsByAuthorUsername(@Param("authorUsername") String authorUsername, Pageable pageable);
-
     @Query("""
-            SELECT DISTINCT r FROM Recipe r
-            LEFT JOIN FETCH r.author
-            LEFT JOIN FETCH r.category
-            LEFT JOIN FETCH r.ingredients
-            LEFT JOIN FETCH r.steps
-            WHERE r.id IN :ids
+            select r.id as recipeId,
+                   r.title as recipeTitle,
+                   r.description as recipeDescription,
+                   a.id as authorId,
+                   a.username as authorUsername,
+                   c.id as categoryId,
+                   c.name as categoryName
+            from Recipe r
+            join r.author a
+            join r.category c
+            where lower(r.author.username) = lower(:authorUsername)
+              and lower(r.category.name) = lower(:categoryName)
             """)
-    List<Recipe> findAllWithFetchByIds(@Param("ids") List<Long> ids);
+    Page<RecipeFilterProjection> findByAuthorUsernameJPQL(@Param("authorUsername") String authorUsername,
+                                                          @Param("categoryName") String categoryName,
+                                                          Pageable pageable);
 
     @Query(value = """
-            SELECT r.id FROM recipes r
-            JOIN users u ON r.author_id = u.id
-            WHERE LOWER(u.username) = LOWER(:authorUsername)
-            ORDER BY r.id
+            select r.id as recipeId,
+                   r.title as recipeTitle,
+                   r.description as recipeDescription,
+                   u.id as authorId,
+                   u.username as authorUsername,
+                   c.id as categoryId,
+                   c.name as categoryName
+            from recipes r
+            join users u on r.author_id = u.id
+            join categories c on r.category_id = c.id
+            where lower(u.username) = lower(:authorUsername)
+              and lower(c.name) = lower(:categoryName)
             """,
             countQuery = """
-            SELECT COUNT(*) FROM recipes r
-            JOIN users u ON r.author_id = u.id
-            WHERE LOWER(u.username) = LOWER(:authorUsername)
+            select count(*)
+            from recipes r
+            join users u on r.author_id = u.id
+            join categories c on r.category_id = c.id
+            where lower(u.username) = lower(:authorUsername)
+              and lower(c.name) = lower(:categoryName)
             """,
             nativeQuery = true)
-    Page<Long> findRecipeIdsByAuthorUsernameNative(@Param("authorUsername") String authorUsername,
-                                                   Pageable pageable);
+    Page<RecipeFilterProjection> findByAuthorUsernameNative(@Param("authorUsername") String authorUsername,
+                                                            @Param("categoryName") String categoryName,
+                                                            Pageable pageable);
 }

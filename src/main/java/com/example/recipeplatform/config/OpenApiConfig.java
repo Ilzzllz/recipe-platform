@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Configuration;
 @OpenAPIDefinition(
         info = @Info(
                 title = "Recipe Platform API",
-                version = "1.0",
-                description = "REST API for the recipe sharing platform used in laboratory work 2.",
+                version = "4.0",
+                description = "REST API for the recipe sharing platform used in laboratory works 3 and 4.",
                 contact = @Contact(name = "Recipe Platform Team"),
                 license = @License(name = "MIT")
         ),

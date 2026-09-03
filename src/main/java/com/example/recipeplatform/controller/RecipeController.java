@@ -11,16 +11,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/recipes")
 @Tag(name = "Recipes", description = "CRUD operations and lab demos for recipes")
@@ -56,7 +59,7 @@ public class RecipeController {
     @GetMapping("/search")
     @Operation(summary = "Search recipes by title")
     public List<RecipeDto> getByTitle(@Parameter(description = "Part of the recipe title", example = "soup")
-                                      @RequestParam String title) {
+                                      @RequestParam @NotBlank(message = "Title cannot be blank") String title) {
         return recipeService.searchByTitle(title);
     }
 
@@ -74,23 +77,6 @@ public class RecipeController {
         return recipeService.demonstrateNPlusOneSolution();
     }
 
-    @PostMapping("/transactions/without-transactional")
-    @Operation(summary = "Demonstrate partial save without @Transactional",
-            description = "Принимает JSON с данными для создания User, Category, Ingredient. Сохраняет их, затем вызывает ошибку. Рецепт не создаётся, но первые три сущности остаются в БД.")
-    @ApiResponse(responseCode = "200", description = "Partial save demo completed",
-            content = @Content(schema = @Schema(implementation = TransactionDemoResponse.class)))
-    public TransactionDemoResponse demonstratePartialSave(@Valid @RequestBody TransactionTestRequestDto request) {
-        return recipeService.demonstratePartialSaveWithoutTransactional(request);
-    }
-
-    @PostMapping("/transactions/with-transactional")
-    @Operation(summary = "Demonstrate rollback with @Transactional",
-            description = "Принимает JSON с данными для создания User, Category, Ingredient и Recipe. Всё сохраняется в транзакции, после чего вызывается ошибка. Все данные откатываются.")
-    @ApiResponse(responseCode = "500", description = "Intentional rollback demo error",
-            content = @Content(schema = @Schema(implementation = TransactionDemoResponse.class)))
-    public TransactionDemoResponse demonstrateRollback(@Valid @RequestBody TransactionTestRequestDto request) {
-        return recipeService.demonstrateRollbackWithTransactional(request);
-    }
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new recipe")
@@ -117,22 +103,26 @@ public class RecipeController {
     }
 
     @GetMapping("/filter/jpql")
-    @Operation(summary = "Filter recipes by author username (JPQL + pagination)",
-            description = "Uses JPQL query with two-step loading. Pagination and in-memory cache are applied.")
-    public Page<RecipeDto> filterByAuthorJPQL(
+    @Operation(summary = "Filter recipes by nested author and category fields (JPQL + pagination)",
+            description = "Filters by Recipe.author.username and Recipe.category.name. Uses a JPQL projection, pagination and in-memory caching without lazy collection loading.")
+    public Page<RecipeFilterDto> filterByAuthorAndCategoryJPQL(
             @Parameter(description = "Author username (case-insensitive)", example = "anna")
-            @RequestParam String authorUsername,
+            @RequestParam @NotBlank(message = "Author username cannot be blank") String authorUsername,
+            @Parameter(description = "Category name (case-insensitive)", example = "Soups")
+            @RequestParam @NotBlank(message = "Category name cannot be blank") String categoryName,
             @ParameterObject @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        return recipeService.findByAuthorJPQL(authorUsername, pageable);
+        return recipeService.findByAuthorAndCategoryJPQL(authorUsername, categoryName, pageable);
     }
 
     @GetMapping("/filter/native")
-    @Operation(summary = "Filter recipes by author username (native SQL + pagination)",
-            description = "Uses native SQL query with LIMIT/OFFSET. Pagination and in-memory cache are applied.")
-    public Page<RecipeDto> filterByAuthorNative(
+    @Operation(summary = "Filter recipes by nested author and category fields (native SQL + pagination)",
+            description = "Native SQL analogue of the JPQL filter with users and categories JOINs, pagination and in-memory caching.")
+    public Page<RecipeFilterDto> filterByAuthorAndCategoryNative(
             @Parameter(description = "Author username (case-insensitive)", example = "anna")
-            @RequestParam String authorUsername,
+            @RequestParam @NotBlank(message = "Author username cannot be blank") String authorUsername,
+            @Parameter(description = "Category name (case-insensitive)", example = "Soups")
+            @RequestParam @NotBlank(message = "Category name cannot be blank") String categoryName,
             @ParameterObject @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        return recipeService.findByAuthorNative(authorUsername, pageable);
+        return recipeService.findByAuthorAndCategoryNative(authorUsername, categoryName, pageable);
     }
 }

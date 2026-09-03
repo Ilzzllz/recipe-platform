@@ -12,6 +12,7 @@ import com.example.recipeplatform.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.LinkedHashMap;
@@ -74,6 +75,7 @@ public class DataInitializer {
     private static final String INGREDIENT_LEMON = "lemon";   // <-- добавлено
 
     @Bean
+    @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
     CommandLineRunner seedData(UserRepository userRepository,
                                CategoryRepository categoryRepository,
                                IngredientRepository ingredientRepository,

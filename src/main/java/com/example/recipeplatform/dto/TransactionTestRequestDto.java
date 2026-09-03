@@ -1,41 +1,44 @@
 package com.example.recipeplatform.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Schema(description = "Запрос для демонстрации транзакций (частичное сохранение / rollback)")
+@Schema(description = "Request payload for transaction demo scenarios")
 public class TransactionTestRequestDto {
 
     @NotBlank
-    @Schema(description = "Имя пользователя (будет дополнено уникальным маркером)", example = "demo_user")
+    @Schema(description = "Username prefix that will be extended with a unique marker", example = "demo_user")
     private String userUsername;
 
     @NotBlank
-    @Schema(description = "Email пользователя", example = "demo@example.com")
+    @Email
+    @Schema(description = "Base email for the demo user", example = "demo@example.com")
     private String userEmail;
 
-    @Schema(description = "Bio пользователя", example = "Создан для демонстрации транзакций")
+    @Schema(description = "Optional bio for the demo user", example = "Created for transaction demos")
     private String userBio;
 
     @NotBlank
-    @Schema(description = "Название категории", example = "demo_category")
+    @Schema(description = "Category name prefix", example = "demo_category")
     private String categoryName;
 
-    @Schema(description = "Описание категории", example = "Временная категория")
+    @Schema(description = "Optional category description", example = "Temporary category for transaction checks")
     private String categoryDescription;
 
     @NotBlank
-    @Schema(description = "Название ингредиента", example = "demo_ingredient")
+    @Schema(description = "Ingredient name prefix", example = "demo_ingredient")
     private String ingredientName;
 
     @NotBlank
-    @Schema(description = "Заголовок рецепта", example = "demo_recipe")
+    @Schema(description = "Recipe title prefix", example = "demo_recipe")
     private String recipeTitle;
 
-    @Schema(description = "Описание рецепта", example = "Будет ли сохранён?")
+    @NotBlank
+    @Schema(description = "Recipe description used in the transactional demo", example = "Will this recipe be rolled back?")
     private String recipeDescription;
 }

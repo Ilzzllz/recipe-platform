@@ -4,7 +4,6 @@ import com.example.recipeplatform.cache.CacheKey;
 import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.*;
 import com.example.recipeplatform.exception.NotFoundException;
-import com.example.recipeplatform.exception.TransactionDemoException;
 import com.example.recipeplatform.mapper.CookingStepMapper;
 import com.example.recipeplatform.mapper.RecipeMapper;
 import com.example.recipeplatform.model.Category;
@@ -13,26 +12,20 @@ import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
 import com.example.recipeplatform.model.User;
 import com.example.recipeplatform.repository.CategoryRepository;
-import com.example.recipeplatform.repository.CookingStepRepository;
 import com.example.recipeplatform.repository.IngredientRepository;
 import com.example.recipeplatform.repository.RecipeRepository;
 import com.example.recipeplatform.repository.UserRepository;
+import com.example.recipeplatform.repository.projection.RecipeFilterProjection;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class RecipeService {
@@ -46,32 +39,26 @@ public class RecipeService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final IngredientRepository ingredientRepository;
-    private final CookingStepRepository cookingStepRepository;
     private final RecipeMapper recipeMapper;
     private final CookingStepMapper cookingStepMapper;
     private final EntityManagerFactory entityManagerFactory;
-    private final RecipeTransactionScenarioService recipeTransactionScenarioService;
     private final RecipeQueryCacheService recipeQueryCacheService;
 
     public RecipeService(RecipeRepository recipeRepository,
                          UserRepository userRepository,
                          CategoryRepository categoryRepository,
                          IngredientRepository ingredientRepository,
-                         CookingStepRepository cookingStepRepository,
                          RecipeMapper recipeMapper,
                          CookingStepMapper cookingStepMapper,
                          EntityManagerFactory entityManagerFactory,
-                         RecipeTransactionScenarioService recipeTransactionScenarioService,
                          RecipeQueryCacheService recipeQueryCacheService) {
         this.recipeRepository = recipeRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.ingredientRepository = ingredientRepository;
-        this.cookingStepRepository = cookingStepRepository;
         this.recipeMapper = recipeMapper;
         this.cookingStepMapper = cookingStepMapper;
         this.entityManagerFactory = entityManagerFactory;
-        this.recipeTransactionScenarioService = recipeTransactionScenarioService;
         this.recipeQueryCacheService = recipeQueryCacheService;
     }
 
@@ -132,44 +119,32 @@ public class RecipeService {
         return buildNPlusOneResponse("Fetch join solution", recipes, statistics.getPrepareStatementCount());
     }
 
-    public TransactionDemoResponse demonstratePartialSaveWithoutTransactional(TransactionTestRequestDto request) {
-        String marker = buildMarker("plain");
-        try {
-            recipeTransactionScenarioService.saveWithoutTransactional(request, marker);
-            throw new IllegalStateException("Partial save demo should always end with an intentional failure");
-        } catch (TransactionDemoException exception) {
-            return buildTransactionDemoResponse(exception.getScenario(), exception.getMarker(), exception.getMessage());
-        }
-    }
-
-    public TransactionDemoResponse demonstrateRollbackWithTransactional(TransactionTestRequestDto request) {
-        String marker = buildMarker("tx");
-        recipeTransactionScenarioService.saveWithTransactional(request, marker);
-        throw new IllegalStateException("Unreachable");
-    }
-
     @Transactional(readOnly = true)
-    public Page<RecipeDto> findByAuthorJPQL(String authorUsername, Pageable pageable) {
-        CacheKey key = CacheKey.from("jpql", authorUsername, pageable);
-        Page<RecipeDto> cached = recipeQueryCacheService.get(key);
+    public Page<RecipeFilterDto> findByAuthorAndCategoryJPQL(String authorUsername,
+                                                              String categoryName,
+                                                              Pageable pageable) {
+        CacheKey key = CacheKey.from("jpql", authorUsername, categoryName, pageable);
+        Page<RecipeFilterDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
             return cached;
         }
-        Page<RecipeDto> result = buildFilteredPage(recipeRepository.findRecipeIdsByAuthorUsername(authorUsername, pageable),
-                pageable);
+        Page<RecipeFilterDto> result = recipeRepository.findByAuthorUsernameJPQL(authorUsername, categoryName, pageable)
+                .map(this::mapFilterProjection);
         recipeQueryCacheService.put(key, result);
         return result;
     }
 
     @Transactional(readOnly = true)
-    public Page<RecipeDto> findByAuthorNative(String authorUsername, Pageable pageable) {
-        CacheKey key = CacheKey.from("native", authorUsername, pageable);
-        Page<RecipeDto> cached = recipeQueryCacheService.get(key);
+    public Page<RecipeFilterDto> findByAuthorAndCategoryNative(String authorUsername,
+                                                                String categoryName,
+                                                                Pageable pageable) {
+        CacheKey key = CacheKey.from("native", authorUsername, categoryName, pageable);
+        Page<RecipeFilterDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
             return cached;
         }
-        Page<RecipeDto> result = buildFilteredPage(
-                recipeRepository.findRecipeIdsByAuthorUsernameNative(authorUsername, pageable), pageable);
+        Page<RecipeFilterDto> result = recipeRepository.findByAuthorUsernameNative(authorUsername, categoryName, pageable)
+                .map(this::mapFilterProjection);
         recipeQueryCacheService.put(key, result);
         return result;
     }
@@ -201,21 +176,22 @@ public class RecipeService {
                 .toList();
     }
 
-    private Page<RecipeDto> buildFilteredPage(Page<Long> idsPage, Pageable pageable) {
-        if (idsPage.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<Recipe> recipes = recipeRepository.findAllWithFetchByIds(idsPage.getContent());
-        Map<Long, Recipe> recipeMap = new LinkedHashMap<>();
-        for (Recipe recipe : recipes) {
-            recipeMap.put(recipe.getId(), recipe);
-        }
-        List<RecipeDto> orderedRecipeDtos = idsPage.getContent().stream()
-                .map(recipeMap::get)
-                .filter(Objects::nonNull)
-                .map(recipeMapper::toDto)
-                .collect(Collectors.toList());
-        return new PageImpl<>(orderedRecipeDtos, pageable, idsPage.getTotalElements());
+    private RecipeFilterDto mapFilterProjection(RecipeFilterProjection projection) {
+        RecipeFilterDto dto = new RecipeFilterDto();
+        dto.setId(projection.getRecipeId());
+        dto.setTitle(projection.getRecipeTitle());
+        dto.setDescription(projection.getRecipeDescription());
+
+        AuthorReferenceDto authorReferenceDto = new AuthorReferenceDto();
+        authorReferenceDto.setId(projection.getAuthorId());
+        authorReferenceDto.setUsername(projection.getAuthorUsername());
+        dto.setAuthor(authorReferenceDto);
+
+        CategoryReferenceDto categoryReferenceDto = new CategoryReferenceDto();
+        categoryReferenceDto.setId(projection.getCategoryId());
+        categoryReferenceDto.setName(projection.getCategoryName());
+        dto.setCategory(categoryReferenceDto);
+        return dto;
     }
 
     private NPlusOneDemoResponse buildNPlusOneResponse(String scenario,
@@ -226,27 +202,6 @@ public class RecipeService {
         response.setSqlStatements(statementCount);
         response.setRecipesLoaded(recipes.size());
         response.setRecipes(recipes);
-        return response;
-    }
-
-    private String buildMarker(String scenario) {
-        return "demo_" + scenario + "_" + Instant.now().toEpochMilli();
-    }
-
-    private TransactionDemoResponse buildTransactionDemoResponse(String scenario,
-                                                                 String marker,
-                                                                 String message) {
-        TransactionDemoResponse response = new TransactionDemoResponse();
-        response.setScenario(scenario);
-        response.setMarker(marker);
-        response.setMessage(message);
-        response.setPersistedRecords(Map.of(
-                "users", userRepository.countByUsernameStartingWith(marker),
-                "categories", categoryRepository.countByNameStartingWith(marker),
-                "ingredients", ingredientRepository.countByNameStartingWith(marker),
-                "recipes", recipeRepository.countByTitleStartingWith(marker),
-                "cookingSteps", cookingStepRepository.countByDescriptionStartingWith(marker)
-        ));
         return response;
     }
 
