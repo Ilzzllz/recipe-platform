@@ -6,11 +6,13 @@ import com.example.recipeplatform.dto.RecipeCreateDto;
 import com.example.recipeplatform.dto.RecipeDto;
 import com.example.recipeplatform.dto.RecipeFilterDto;
 import com.example.recipeplatform.dto.RecipeStepCreateDto;
+import com.example.recipeplatform.exception.NotFoundException;
 import com.example.recipeplatform.model.Category;
 import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.User;
 import com.example.recipeplatform.repository.CategoryRepository;
 import com.example.recipeplatform.repository.IngredientRepository;
+import com.example.recipeplatform.repository.RecipeRepository;
 import com.example.recipeplatform.repository.UserRepository;
 import com.example.recipeplatform.service.RecipeService;
 import jakarta.persistence.EntityManagerFactory;
@@ -34,6 +36,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -61,6 +64,9 @@ class RecipePlatformApplicationTests {
 
     @Autowired
     private IngredientRepository ingredientRepository;
+
+    @Autowired
+    private RecipeRepository recipeRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -158,6 +164,34 @@ class RecipePlatformApplicationTests {
     }
 
     @Test
+    void transactionalBulkShouldRollbackEveryRecipeWhenLaterItemFails() {
+        RecipeCreateDto savedCandidate = bulkRequest("tx_bulk_" + UUID.randomUUID());
+        RecipeCreateDto invalidCandidate = bulkRequest("tx_invalid_" + UUID.randomUUID());
+        invalidCandidate.setIngredientIds(Set.of(Long.MAX_VALUE));
+
+        assertThatThrownBy(() -> recipeService.createBulk(List.of(savedCandidate, invalidCandidate)))
+                .isInstanceOf(NotFoundException.class);
+
+        assertThat(recipeRepository.existsByTitleIgnoreCase(savedCandidate.getTitle())).isFalse();
+    }
+
+    @Test
+    void bulkWithoutTransactionShouldKeepEarlierRecipeWhenLaterItemFails() {
+        RecipeCreateDto savedCandidate = bulkRequest("no_tx_bulk_" + UUID.randomUUID());
+        RecipeCreateDto invalidCandidate = bulkRequest("no_tx_invalid_" + UUID.randomUUID());
+        invalidCandidate.setIngredientIds(Set.of(Long.MAX_VALUE));
+
+        assertThatThrownBy(() -> recipeService.createBulkWithoutTransaction(List.of(savedCandidate, invalidCandidate)))
+                .isInstanceOf(NotFoundException.class);
+
+        assertThat(recipeRepository.existsByTitleIgnoreCase(savedCandidate.getTitle())).isTrue();
+        recipeRepository.findAll().stream()
+                .filter(recipe -> recipe.getTitle().equals(savedCandidate.getTitle()))
+                .findFirst()
+                .ifPresent(recipe -> recipeService.delete(recipe.getId()));
+    }
+
+    @Test
     void invalidRequestShouldReturnUnifiedApiError() throws Exception {
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -194,5 +228,23 @@ class RecipePlatformApplicationTests {
         step.setStepOrder(order);
         step.setDescription(description);
         return step;
+    }
+
+    private RecipeCreateDto bulkRequest(String title) {
+        User author = userRepository.findByUsernameIgnoreCase("anna").orElseThrow();
+        Category category = categoryRepository.findByNameIgnoreCase("Soups").orElseThrow();
+        Long ingredientId = ingredientRepository.findAll().stream()
+                .map(Ingredient::getId)
+                .findFirst()
+                .orElseThrow();
+
+        RecipeCreateDto request = new RecipeCreateDto();
+        request.setTitle(title);
+        request.setDescription("Recipe used to demonstrate bulk transaction behavior");
+        request.setAuthorId(author.getId());
+        request.setCategoryId(category.getId());
+        request.setIngredientIds(Set.of(ingredientId));
+        request.setSteps(List.of(step(1, "Prepare bulk recipe")));
+        return request;
     }
 }

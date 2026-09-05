@@ -1,6 +1,9 @@
 package com.example.recipeplatform.controller;
 
-import com.example.recipeplatform.dto.*;
+import com.example.recipeplatform.dto.NPlusOneDemoResponse;
+import com.example.recipeplatform.dto.RecipeCreateDto;
+import com.example.recipeplatform.dto.RecipeDto;
+import com.example.recipeplatform.dto.RecipeFilterDto;
 import com.example.recipeplatform.exception.ApiError;
 import com.example.recipeplatform.service.RecipeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +23,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -124,5 +137,21 @@ public class RecipeController {
             @RequestParam @NotBlank(message = "Category name cannot be blank") String categoryName,
             @ParameterObject @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return recipeService.findByAuthorAndCategoryNative(authorUsername, categoryName, pageable);
+    }
+
+    @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Bulk create recipes with transaction",
+            description = "Creates multiple recipes atomically. If any recipe fails, none are saved.")
+    public List<RecipeDto> createBulk(@RequestBody @NotEmpty List<@Valid RecipeCreateDto> dtos) {
+        return recipeService.createBulk(dtos);
+    }
+
+    @PostMapping("/bulk/no-tx")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Bulk create recipes WITHOUT transaction",
+            description = "Creates recipes one by one without global transaction. Partial success is possible.")
+    public List<RecipeDto> createBulkWithoutTransaction(@RequestBody @NotEmpty List<@Valid RecipeCreateDto> dtos) {
+        return recipeService.createBulkWithoutTransaction(dtos);
     }
 }

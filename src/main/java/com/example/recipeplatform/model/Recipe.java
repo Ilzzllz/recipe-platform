@@ -77,13 +77,9 @@ public class Recipe {
 
     public void addIngredient(Ingredient ingredient) {
         ingredients.add(ingredient);
-        ingredient.getRecipes().add(this);
     }
 
     public void replaceIngredients(Set<Ingredient> newIngredients) {
-        for (Ingredient ingredient : ingredients) {
-            ingredient.getRecipes().remove(this);
-        }
         ingredients.clear();
         if (newIngredients == null) {
             return;

@@ -2,7 +2,13 @@ package com.example.recipeplatform.service;
 
 import com.example.recipeplatform.cache.CacheKey;
 import com.example.recipeplatform.cache.RecipeQueryCacheService;
-import com.example.recipeplatform.dto.*;
+import com.example.recipeplatform.dto.AuthorReferenceDto;
+import com.example.recipeplatform.dto.CategoryReferenceDto;
+import com.example.recipeplatform.dto.NPlusOneDemoResponse;
+import com.example.recipeplatform.dto.RecipeCreateDto;
+import com.example.recipeplatform.dto.RecipeDto;
+import com.example.recipeplatform.dto.RecipeFilterDto;
+import com.example.recipeplatform.dto.RecipeStepCreateDto;
 import com.example.recipeplatform.exception.NotFoundException;
 import com.example.recipeplatform.mapper.CookingStepMapper;
 import com.example.recipeplatform.mapper.RecipeMapper;
@@ -26,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class RecipeService {
@@ -147,6 +155,63 @@ public class RecipeService {
                 .map(this::mapFilterProjection);
         recipeQueryCacheService.put(key, result);
         return result;
+    }
+
+    private Recipe convertToRecipe(RecipeCreateDto dto) {
+        User author = userRepository.findById(dto.getAuthorId())
+                .orElseThrow(() -> new NotFoundException(USER_WITH_ID_PREFIX + dto.getAuthorId() + NOT_FOUND_SUFFIX));
+
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new NotFoundException(CATEGORY_WITH_ID_PREFIX + dto.getCategoryId() + NOT_FOUND_SUFFIX));
+
+        Set<Ingredient> ingredients = dto.getIngredientIds().stream()
+                .map(id -> ingredientRepository.findById(id)
+                        .orElseThrow(() -> new NotFoundException("Ingredient with id " + id + NOT_FOUND_SUFFIX)))
+                .collect(Collectors.toSet());
+
+        Recipe recipe = new Recipe();
+        recipe.setTitle(dto.getTitle());
+        recipe.setDescription(dto.getDescription());
+        recipe.setAuthor(author);
+        recipe.setCategory(category);
+        recipe.replaceIngredients(ingredients);
+
+        List<CookingStep> steps = dto.getSteps().stream()
+                .map(stepDto -> {
+                    CookingStep step = new CookingStep();
+                    step.setStepOrder(stepDto.getStepOrder());
+                    step.setDescription(stepDto.getDescription());
+                    return step;
+                })
+                .collect(Collectors.toList());
+        recipe.replaceSteps(steps);
+
+        return recipe;
+    }
+
+    @Transactional
+    public List<RecipeDto> createBulk(List<RecipeCreateDto> dtos) {
+        try {
+            return saveBulkRecipes(dtos);
+        } finally {
+            recipeQueryCacheService.invalidateAll();
+        }
+    }
+
+    public List<RecipeDto> createBulkWithoutTransaction(List<RecipeCreateDto> dtos) {
+        try {
+            return saveBulkRecipes(dtos);
+        } finally {
+            recipeQueryCacheService.invalidateAll();
+        }
+    }
+
+    private List<RecipeDto> saveBulkRecipes(List<RecipeCreateDto> dtos) {
+        return dtos.stream()
+                .map(this::convertToRecipe)
+                .map(recipeRepository::saveAndFlush)
+                .map(recipeMapper::toDto)
+                .toList();
     }
 
     private Recipe findDetailedRecipe(Long id) {
