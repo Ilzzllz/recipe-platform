@@ -121,8 +121,8 @@ public class RecipeService {
 
     @Transactional(readOnly = true)
     public Page<RecipeFilterDto> findByAuthorAndCategoryJPQL(String authorUsername,
-                                                              String categoryName,
-                                                              Pageable pageable) {
+                                                             String categoryName,
+                                                             Pageable pageable) {
         CacheKey key = CacheKey.from("jpql", authorUsername, categoryName, pageable);
         Page<RecipeFilterDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
@@ -136,8 +136,8 @@ public class RecipeService {
 
     @Transactional(readOnly = true)
     public Page<RecipeFilterDto> findByAuthorAndCategoryNative(String authorUsername,
-                                                                String categoryName,
-                                                                Pageable pageable) {
+                                                               String categoryName,
+                                                               Pageable pageable) {
         CacheKey key = CacheKey.from("native", authorUsername, categoryName, pageable);
         Page<RecipeFilterDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
