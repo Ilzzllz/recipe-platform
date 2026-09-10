@@ -15,6 +15,7 @@ import com.example.recipeplatform.repository.IngredientRepository;
 import com.example.recipeplatform.repository.RecipeRepository;
 import com.example.recipeplatform.repository.UserRepository;
 import com.example.recipeplatform.service.RecipeService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
@@ -70,6 +71,9 @@ class RecipePlatformApplicationTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @AfterEach
     void clearCache() {
@@ -189,6 +193,45 @@ class RecipePlatformApplicationTests {
                 .filter(recipe -> recipe.getTitle().equals(savedCandidate.getTitle()))
                 .findFirst()
                 .ifPresent(recipe -> recipeService.delete(recipe.getId()));
+    }
+
+    @Test
+    void transactionalBulkEndpointShouldRollbackFirstObjectWhenSecondObjectIsInvalid() throws Exception {
+        RecipeCreateDto firstObject = bulkRequest("http_tx_bulk_" + UUID.randomUUID());
+        RecipeCreateDto secondObject = bulkRequest("http_tx_invalid_" + UUID.randomUUID());
+        secondObject.setIngredientIds(Set.of(Long.MAX_VALUE));
+
+        mockMvc.perform(post("/api/recipes/bulk")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(List.of(firstObject, secondObject))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Ingredient with id " + Long.MAX_VALUE + " was not found"));
+
+        assertThat(recipeRepository.existsByTitleIgnoreCase(firstObject.getTitle())).isFalse();
+    }
+
+    @Test
+    void nonTransactionalBulkEndpointShouldKeepFirstObjectWhenSecondObjectIsInvalid() throws Exception {
+        RecipeCreateDto firstObject = bulkRequest("http_no_tx_bulk_" + UUID.randomUUID());
+        RecipeCreateDto secondObject = bulkRequest("http_no_tx_invalid_" + UUID.randomUUID());
+        secondObject.setIngredientIds(Set.of(Long.MAX_VALUE));
+
+        try {
+            mockMvc.perform(post("/api/recipes/bulk/no-tx")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(List.of(firstObject, secondObject))))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andExpect(jsonPath("$.message").value("Ingredient with id " + Long.MAX_VALUE + " was not found"));
+
+            assertThat(recipeRepository.existsByTitleIgnoreCase(firstObject.getTitle())).isTrue();
+        } finally {
+            recipeRepository.findAll().stream()
+                    .filter(recipe -> recipe.getTitle().equals(firstObject.getTitle()))
+                    .findFirst()
+                    .ifPresent(recipe -> recipeService.delete(recipe.getId()));
+        }
     }
 
     @Test
