@@ -9,6 +9,7 @@ import com.example.recipeplatform.service.RecipeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -49,6 +50,27 @@ import java.util.List;
                 content = @Content(schema = @Schema(implementation = ApiError.class)))
 })
 public class RecipeController {
+
+    private static final String TRANSACTIONAL_BULK_EXAMPLE = """
+            [
+              {
+                "title": "TX valid recipe 1",
+                "description": "The first valid recipe",
+                "authorId": 1,
+                "categoryId": 2,
+                "ingredientIds": [3],
+                "steps": [{ "stepOrder": 1, "description": "Prepare ingredients" }]
+              },
+              {
+                "title": "TX broken recipe 2",
+                "description": "The second recipe contains an invalid ingredient",
+                "authorId": 1,
+                "categoryId": 2,
+                "ingredientIds": [999999],
+                "steps": [{ "stepOrder": 1, "description": "This recipe must fail" }]
+              }
+            ]
+            """;
 
     private final RecipeService recipeService;
 
@@ -143,7 +165,14 @@ public class RecipeController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Bulk create recipes with transaction",
             description = "Creates multiple recipes atomically. If any recipe fails, none are saved.")
-    public List<RecipeDto> createBulk(@RequestBody @NotEmpty List<@Valid RecipeCreateDto> dtos) {
+    public List<RecipeDto> createBulk(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Two recipes: the second contains an intentionally invalid ingredient id.",
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "Rollback demonstration",
+                                    value = TRANSACTIONAL_BULK_EXAMPLE)))
+            @RequestBody @NotEmpty List<@Valid RecipeCreateDto> dtos) {
         return recipeService.createBulk(dtos);
     }
 
@@ -151,7 +180,14 @@ public class RecipeController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Bulk create recipes WITHOUT transaction",
             description = "Creates recipes one by one without global transaction. Partial success is possible.")
-    public List<RecipeDto> createBulkWithoutTransaction(@RequestBody @NotEmpty List<@Valid RecipeCreateDto> dtos) {
+    public List<RecipeDto> createBulkWithoutTransaction(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Two recipes: the second contains an intentionally invalid ingredient id.",
+                    required = true,
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(name = "Partial save demonstration",
+                                    value = TRANSACTIONAL_BULK_EXAMPLE)))
+            @RequestBody @NotEmpty List<@Valid RecipeCreateDto> dtos) {
         return recipeService.createBulkWithoutTransaction(dtos);
     }
 }
