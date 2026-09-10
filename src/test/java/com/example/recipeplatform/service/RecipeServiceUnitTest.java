@@ -30,7 +30,6 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -98,8 +97,9 @@ class RecipeServiceUnitTest {
         RecipeCreateDto invalid = request("Broken soup");
         invalid.setIngredientIds(Set.of(999L));
         when(ingredientRepository.findById(999L)).thenReturn(Optional.empty());
+        List<RecipeCreateDto> recipes = List.of(request("Saved soup"), invalid);
 
-        assertThatThrownBy(() -> recipeService.createBulkWithoutTransaction(List.of(request("Saved soup"), invalid)))
+        assertThatThrownBy(() -> recipeService.createBulkWithoutTransaction(recipes))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("Ingredient with id 999");
 
@@ -110,9 +110,10 @@ class RecipeServiceUnitTest {
     @Test
     void createBulkShouldStopBeforeSavingWhenOptionalAuthorIsEmpty() {
         RecipeCreateDto request = request("No author soup");
-        when(userRepository.findById(eq(1L))).thenReturn(Optional.empty());
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        List<RecipeCreateDto> recipes = List.of(request);
 
-        assertThatThrownBy(() -> recipeService.createBulk(List.of(request)))
+        assertThatThrownBy(() -> recipeService.createBulk(recipes))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("User with id 1");
 

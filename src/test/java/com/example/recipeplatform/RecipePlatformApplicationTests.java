@@ -93,7 +93,7 @@ class RecipePlatformApplicationTests {
         CacheKey second = CacheKey.from("jpql", "anna", "soups", pageable);
 
         assertThat(first).isEqualTo(second);
-        assertThat(first.hashCode()).isEqualTo(second.hashCode());
+        assertThat(first).hasSameHashCodeAs(second);
     }
 
     @Test
@@ -172,8 +172,9 @@ class RecipePlatformApplicationTests {
         RecipeCreateDto savedCandidate = bulkRequest("tx_bulk_" + UUID.randomUUID());
         RecipeCreateDto invalidCandidate = bulkRequest("tx_invalid_" + UUID.randomUUID());
         invalidCandidate.setIngredientIds(Set.of(Long.MAX_VALUE));
+        List<RecipeCreateDto> recipes = List.of(savedCandidate, invalidCandidate);
 
-        assertThatThrownBy(() -> recipeService.createBulk(List.of(savedCandidate, invalidCandidate)))
+        assertThatThrownBy(() -> recipeService.createBulk(recipes))
                 .isInstanceOf(NotFoundException.class);
 
         assertThat(recipeRepository.existsByTitleIgnoreCase(savedCandidate.getTitle())).isFalse();
@@ -184,8 +185,9 @@ class RecipePlatformApplicationTests {
         RecipeCreateDto savedCandidate = bulkRequest("no_tx_bulk_" + UUID.randomUUID());
         RecipeCreateDto invalidCandidate = bulkRequest("no_tx_invalid_" + UUID.randomUUID());
         invalidCandidate.setIngredientIds(Set.of(Long.MAX_VALUE));
+        List<RecipeCreateDto> recipes = List.of(savedCandidate, invalidCandidate);
 
-        assertThatThrownBy(() -> recipeService.createBulkWithoutTransaction(List.of(savedCandidate, invalidCandidate)))
+        assertThatThrownBy(() -> recipeService.createBulkWithoutTransaction(recipes))
                 .isInstanceOf(NotFoundException.class);
 
         assertThat(recipeRepository.existsByTitleIgnoreCase(savedCandidate.getTitle())).isTrue();

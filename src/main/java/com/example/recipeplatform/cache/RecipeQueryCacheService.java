@@ -2,12 +2,12 @@ package com.example.recipeplatform.cache;
 
 import com.example.recipeplatform.dto.RecipeFilterDto;
 import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
+@Service
 public class RecipeQueryCacheService {
 
     private final Map<CacheKey, Page<RecipeFilterDto>> cache = new HashMap<>();

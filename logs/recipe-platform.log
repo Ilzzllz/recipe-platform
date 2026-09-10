@@ -968,3 +968,38 @@ com.example.recipeplatform.exception.NotFoundException: Ingredient with id 92233
 2026-09-10 10:51:41.724 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
 2026-09-10 10:51:41.742 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
 2026-09-10 10:51:41.751 [main] INFO  c.e.r.RecipePlatformApplication - Started RecipePlatformApplication in 4.171 seconds (process running for 4.694)
+2026-09-10 10:59:39.388 [main] INFO  c.e.r.RecipePlatformApplicationTests - Starting RecipePlatformApplicationTests using Java 21.0.10 with PID 14648 (started by Lenovo in D:\java\recipe-platform)
+2026-09-10 10:59:39.389 [main] INFO  c.e.r.RecipePlatformApplicationTests - No active profile set, falling back to 1 default profile: "default"
+2026-09-10 10:59:40.258 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-10 10:59:40.308 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 45 ms. Found 5 JPA repository interfaces.
+2026-09-10 10:59:42.077 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-10 10:59:42.134 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-09-10 10:59:42.527 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@73da303e
+2026-09-10 10:59:42.527 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-09-10 10:59:45.076 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-10 10:59:45.983 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-09-10 10:59:49.309 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-09-10 10:59:49.310 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-09-10 10:59:49.312 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+2026-09-10 10:59:49.374 [main] INFO  c.e.r.RecipePlatformApplicationTests - Started RecipePlatformApplicationTests in 10.357 seconds (process running for 11.315)
+2026-09-10 10:59:50.740 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.findByAuthorAndCategoryJPQL executed in 42 ms
+2026-09-10 10:59:50.760 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.findByAuthorAndCategoryJPQL executed in 0 ms
+2026-09-10 10:59:51.291 [main] WARN  c.e.r.aspect.LoggingAspect - Method RecipeService.createBulk failed after 86 ms
+2026-09-10 10:59:51.291 [main] WARN  c.e.r.e.GlobalExceptionHandler - Not found: Ingredient with id 9223372036854775807 was not found
+2026-09-10 10:59:52.609 [main] INFO  o.s.api.AbstractOpenApiResource - Init duration for springdoc-openapi is: 1208 ms
+2026-09-10 10:59:52.791 [main] WARN  c.e.r.aspect.LoggingAspect - Method RecipeService.createBulkWithoutTransaction failed after 27 ms
+2026-09-10 10:59:52.791 [main] WARN  c.e.r.e.GlobalExceptionHandler - Not found: Ingredient with id 9223372036854775807 was not found
+2026-09-10 10:59:52.854 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.delete executed in 20 ms
+2026-09-10 10:59:52.932 [main] WARN  c.e.r.aspect.LoggingAspect - Method RecipeService.createBulk failed after 16 ms
+2026-09-10 10:59:53.007 [main] WARN  c.e.r.aspect.LoggingAspect - Method RecipeService.createBulkWithoutTransaction failed after 19 ms
+2026-09-10 10:59:53.024 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.delete executed in 4 ms
+2026-09-10 10:59:53.049 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.findByAuthorAndCategoryJPQL executed in 5 ms
+2026-09-10 10:59:53.050 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.findByAuthorAndCategoryJPQL executed in 0 ms
+2026-09-10 10:59:53.085 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.create executed in 21 ms
+2026-09-10 10:59:53.091 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.findByAuthorAndCategoryJPQL executed in 5 ms
+2026-09-10 10:59:53.107 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.delete executed in 4 ms
+2026-09-10 10:59:53.195 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.findByAuthorAndCategoryNative executed in 77 ms
+2026-09-10 10:59:53.200 [main] INFO  c.e.r.aspect.LoggingAspect - Method RecipeService.findByAuthorAndCategoryNative executed in 0 ms
+2026-09-10 10:59:54.836 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-09-10 10:59:54.842 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-09-10 10:59:54.852 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.

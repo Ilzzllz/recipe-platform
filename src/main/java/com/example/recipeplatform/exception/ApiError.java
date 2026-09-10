@@ -2,6 +2,7 @@ package com.example.recipeplatform.exception;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -9,7 +10,7 @@ import java.util.Map;
 public class ApiError {
 
     @Schema(description = "Timestamp when the error was generated", example = "2026-04-30T02:39:22.8439546")
-    private final LocalDateTime timestamp = LocalDateTime.now();
+    private final LocalDateTime timestamp;
 
     @Schema(description = "HTTP status code", example = "400")
     private final int status;
@@ -27,6 +28,7 @@ public class ApiError {
     private final Map<String, Object> details;
 
     public ApiError(int status, String error, String message, String path, Map<String, Object> details) {
+        this.timestamp = LocalDateTime.now(Clock.systemDefaultZone());
         this.status = status;
         this.error = error;
         this.message = message;

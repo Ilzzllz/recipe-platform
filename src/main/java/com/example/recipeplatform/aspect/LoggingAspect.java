@@ -21,12 +21,6 @@ public class LoggingAspect {
             Object result = joinPoint.proceed();
             success = true;
             return result;
-        } catch (Throwable throwable) {
-            logger.error("Exception in {}.{}: {}",
-                    joinPoint.getTarget().getClass().getSimpleName(),
-                    joinPoint.getSignature().getName(),
-                    throwable.getMessage(), throwable);
-            throw throwable;
         } finally {
             long elapsedTimeMs = (System.nanoTime() - start) / 1_000_000;
             if (success) {
