@@ -92,8 +92,9 @@ class RecipePlatformApplicationTests {
         CacheKey first = CacheKey.from("jpql", " Anna ", " Soups ", pageable);
         CacheKey second = CacheKey.from("jpql", "anna", "soups", pageable);
 
-        assertThat(first).isEqualTo(second);
-        assertThat(first).hasSameHashCodeAs(second);
+        assertThat(first)
+                .isEqualTo(second)
+                .hasSameHashCodeAs(second);
     }
 
     @Test
