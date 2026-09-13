@@ -1,11 +1,18 @@
 package com.example.recipeplatform.controller;
 
+import com.example.recipeplatform.dto.AsyncTaskResponseDto;
+import com.example.recipeplatform.dto.CounterStatsDto;
 import com.example.recipeplatform.dto.NPlusOneDemoResponse;
+import com.example.recipeplatform.dto.RaceConditionDemoResultDto;
 import com.example.recipeplatform.dto.RecipeCreateDto;
 import com.example.recipeplatform.dto.RecipeDto;
 import com.example.recipeplatform.dto.RecipeFilterDto;
 import com.example.recipeplatform.exception.ApiError;
+import com.example.recipeplatform.service.NutritionReportService;
 import com.example.recipeplatform.service.RecipeService;
+import com.example.recipeplatform.service.RecipeViewCounterService;
+import org.springframework.http.ResponseEntity;
+import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -73,9 +80,15 @@ public class RecipeController {
             """;
 
     private final RecipeService recipeService;
+    private final RecipeViewCounterService recipeViewCounterService;
+    private final NutritionReportService nutritionReportService;
 
-    public RecipeController(RecipeService recipeService) {
+    public RecipeController(RecipeService recipeService,
+                            RecipeViewCounterService recipeViewCounterService,
+                            NutritionReportService nutritionReportService) {
         this.recipeService = recipeService;
+        this.recipeViewCounterService = recipeViewCounterService;
+        this.nutritionReportService = nutritionReportService;
     }
 
     @GetMapping
@@ -85,9 +98,10 @@ public class RecipeController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get recipe by id")
+    @Operation(summary = "Get recipe by id", description = "Retrieves recipe details and increments view counters (safe and unsafe) for concurrency testing.")
     public RecipeDto getById(@Parameter(description = "Existing recipe id", example = "12")
                              @PathVariable Long id) {
+        recipeViewCounterService.recordView();
         return recipeService.getById(id);
     }
 
@@ -189,5 +203,51 @@ public class RecipeController {
                                     value = TRANSACTIONAL_BULK_EXAMPLE)))
             @RequestBody @NotEmpty List<@Valid RecipeCreateDto> dtos) {
         return recipeService.createBulkWithoutTransaction(dtos);
+    }
+
+    @GetMapping("/views/stats")
+    @Operation(summary = "Get recipe view counters statistics",
+            description = "Compares AtomicLong (safe), synchronized (safe) and raw int (unsafe) counters to show lost updates caused by race conditions during load testing.")
+    public CounterStatsDto getViewCounterStats() {
+        return recipeViewCounterService.getStats();
+    }
+
+    @PostMapping("/views/reset")
+    @Operation(summary = "Reset recipe view counters",
+            description = "Resets safe and unsafe view counters to zero before running a load test in JMeter.")
+    public ResponseEntity<Void> resetViewCounters() {
+        recipeViewCounterService.reset();
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/demo/race-condition")
+    @Operation(summary = "Demonstrate Race Condition using 50+ threads",
+            description = "Executes 50 concurrent threads hammering an unsafe int vs AtomicLong counter to visibly prove race condition and lost updates.")
+    public RaceConditionDemoResultDto demonstrateRaceCondition(
+            @Parameter(description = "Number of concurrent threads (default 50)", example = "50")
+            @RequestParam(defaultValue = "50") int threadCount,
+            @Parameter(description = "Number of increments per thread (default 100)", example = "100")
+            @RequestParam(defaultValue = "100") int incrementsPerThread) {
+        return recipeViewCounterService.demonstrateRaceCondition(threadCount, incrementsPerThread);
+    }
+
+    @PostMapping("/{id}/nutrition-report")
+    @Operation(summary = "Start asynchronous nutrition calculation via Open Food Facts API",
+            description = "Launches a background worker (@Async / CompletableFuture) that fetches nutrition data from Open Food Facts API. Immediately returns 202 Accepted with a task ID.")
+    public ResponseEntity<AsyncTaskResponseDto> startNutritionReport(
+            @Parameter(description = "Recipe ID", example = "1")
+            @PathVariable Long id) {
+        UUID taskId = nutritionReportService.startNutritionReport(id);
+        AsyncTaskResponseDto task = nutritionReportService.getTaskStatus(taskId);
+        return ResponseEntity.accepted().body(task);
+    }
+
+    @GetMapping("/nutrition-report/{taskId}")
+    @Operation(summary = "Check status of asynchronous nutrition report",
+            description = "Polls the status of the background task (IN_PROGRESS -> COMPLETED/FAILED) and returns the computed nutritional report.")
+    public AsyncTaskResponseDto getNutritionReportStatus(
+            @Parameter(description = "Task ID returned by start endpoint", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+            @PathVariable UUID taskId) {
+        return nutritionReportService.getTaskStatus(taskId);
     }
 }
