@@ -216,79 +216,96 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                   </div>
                 )}
 
-                {nutritionTask.status === 'COMPLETED' && nutritionTask.report && (
-                  <div className="space-y-4">
-                    {/* Summary Badges */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
-                        <span className="block text-[11px] text-slate-500 font-medium">Калории</span>
-                        <strong className="text-base text-purple-700 font-bold">
-                          {nutritionTask.report.totalCaloriesKcal} ккал
-                        </strong>
-                      </div>
-                      <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
-                        <span className="block text-[11px] text-slate-500 font-medium">Белки</span>
-                        <strong className="text-base text-purple-700 font-bold">
-                          {nutritionTask.report.totalProteinsGrams} г
-                        </strong>
-                      </div>
-                      <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
-                        <span className="block text-[11px] text-slate-500 font-medium">Жиры</span>
-                        <strong className="text-base text-purple-700 font-bold">
-                          {nutritionTask.report.totalFatGrams} г
-                        </strong>
-                      </div>
-                      <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
-                        <span className="block text-[11px] text-slate-500 font-medium">Углеводы</span>
-                        <strong className="text-base text-purple-700 font-bold">
-                          {nutritionTask.report.totalCarbohydratesGrams} г
-                        </strong>
-                      </div>
-                    </div>
+                {nutritionTask.status === 'COMPLETED' && (nutritionTask.result || nutritionTask.report) && (() => {
+                  const report = nutritionTask.result || nutritionTask.report;
+                  if (!report) return null;
+                  const totalFats = report.totalFatsGrams ?? report.totalFatGrams ?? 0;
+                  const ingredientsList = report.ingredients || report.ingredientsData || [];
 
-                    {/* Breakdown by ingredients */}
-                    <div className="bg-white rounded-2xl border border-purple-100 p-3.5 overflow-x-auto shadow-xs">
-                      <table className="w-full text-left text-xs">
-                        <thead>
-                          <tr className="border-b border-slate-100 text-slate-400 font-medium">
-                            <th className="pb-2">Ингредиент</th>
-                            <th className="pb-2 text-right">Ккал</th>
-                            <th className="pb-2 text-right">Белки</th>
-                            <th className="pb-2 text-right">Жиры</th>
-                            <th className="pb-2 text-right">Углеводы</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-700">
-                          {nutritionTask.report.ingredientsData.map((item, i) => (
-                            <tr key={i} className="hover:bg-slate-50/50">
-                              <td className="py-2.5 flex items-center gap-2">
-                                <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    item.foundInOpenFoodFacts ? 'bg-emerald-500' : 'bg-amber-400'
-                                  }`}
-                                  title={
-                                    item.foundInOpenFoodFacts
-                                      ? 'Найдено в Open Food Facts'
-                                      : 'Кулинарная оценка'
-                                  }
-                                />
-                                <span className="font-medium text-slate-800">
-                                  {item.ingredientName}
-                                </span>
-                              </td>
-                              <td className="py-2.5 text-right font-medium text-slate-900">
-                                {item.caloriesKcal}
-                              </td>
-                              <td className="py-2.5 text-right">{item.proteinsGrams} г</td>
-                              <td className="py-2.5 text-right">{item.fatGrams} г</td>
-                              <td className="py-2.5 text-right">{item.carbohydratesGrams} г</td>
+                  return (
+                    <div className="space-y-4">
+                      {/* Summary Badges */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
+                          <span className="block text-[11px] text-slate-500 font-medium">Калории</span>
+                          <strong className="text-base text-purple-700 font-bold">
+                            {report.totalCaloriesKcal} ккал
+                          </strong>
+                        </div>
+                        <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
+                          <span className="block text-[11px] text-slate-500 font-medium">Белки</span>
+                          <strong className="text-base text-purple-700 font-bold">
+                            {report.totalProteinsGrams} г
+                          </strong>
+                        </div>
+                        <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
+                          <span className="block text-[11px] text-slate-500 font-medium">Жиры</span>
+                          <strong className="text-base text-purple-700 font-bold">
+                            {totalFats} г
+                          </strong>
+                        </div>
+                        <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
+                          <span className="block text-[11px] text-slate-500 font-medium">Углеводы</span>
+                          <strong className="text-base text-purple-700 font-bold">
+                            {report.totalCarbohydratesGrams} г
+                          </strong>
+                        </div>
+                      </div>
+
+                      {/* Breakdown by ingredients */}
+                      <div className="bg-white rounded-2xl border border-purple-100 p-3.5 overflow-x-auto shadow-xs">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-100 text-slate-400 font-medium">
+                              <th className="pb-2">Ингредиент</th>
+                              <th className="pb-2 text-right">Ккал</th>
+                              <th className="pb-2 text-right">Белки</th>
+                              <th className="pb-2 text-right">Жиры</th>
+                              <th className="pb-2 text-right">Углеводы</th>
+                              <th className="pb-2 text-right">Источник</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                            {ingredientsList.map((item, i) => {
+                              const itemFats = item.fatsGrams ?? item.fatGrams ?? 0;
+                              const isOpenFoodFacts =
+                                item.dataSource?.includes('Open Food Facts') || item.foundInOpenFoodFacts;
+
+                              return (
+                                <tr key={i} className="hover:bg-slate-50/50">
+                                  <td className="py-2.5 flex items-center gap-2">
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        isOpenFoodFacts ? 'bg-emerald-500' : 'bg-amber-400'
+                                      }`}
+                                      title={
+                                        isOpenFoodFacts
+                                          ? 'Найдено в Open Food Facts'
+                                          : 'Кулинарная оценка'
+                                      }
+                                    />
+                                    <span className="font-medium text-slate-800">
+                                      {item.ingredientName}
+                                    </span>
+                                  </td>
+                                  <td className="py-2.5 text-right font-medium text-slate-900">
+                                    {item.caloriesKcal}
+                                  </td>
+                                  <td className="py-2.5 text-right">{item.proteinsGrams} г</td>
+                                  <td className="py-2.5 text-right">{itemFats} г</td>
+                                  <td className="py-2.5 text-right">{item.carbohydratesGrams} г</td>
+                                  <td className="py-2.5 text-right text-[10px] text-slate-400">
+                                    {isOpenFoodFacts ? 'Open Food Facts' : 'Оценка'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {nutritionTask.status === 'FAILED' && (
                   <div className="p-3.5 bg-red-50 text-red-700 rounded-2xl text-xs">

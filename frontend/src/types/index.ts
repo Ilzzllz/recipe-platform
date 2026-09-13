@@ -92,32 +92,37 @@ export interface RaceConditionResult {
 
 export interface IngredientNutrition {
   ingredientName: string;
-  barcodeOrQuery: string;
-  foundInOpenFoodFacts: boolean;
   caloriesKcal: number;
   proteinsGrams: number;
-  fatGrams: number;
+  fatsGrams?: number;
+  fatGrams?: number;
   carbohydratesGrams: number;
+  dataSource?: string;
+  foundInOpenFoodFacts?: boolean;
 }
 
 export interface NutritionReport {
   recipeId: number;
   recipeTitle: string;
-  totalIngredientsAnalyzed: number;
   totalCaloriesKcal: number;
   totalProteinsGrams: number;
-  totalFatGrams: number;
+  totalFatsGrams?: number;
+  totalFatGrams?: number;
   totalCarbohydratesGrams: number;
-  ingredientsData: IngredientNutrition[];
-  generatedAt: string;
-  provider: string;
+  ingredients?: IngredientNutrition[];
+  ingredientsData?: IngredientNutrition[];
+  calculatedAt?: string;
 }
 
 export interface NutritionReportTask {
   taskId: string;
   status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
-  submittedAt: string;
-  completedAt: string | null;
-  errorMessage: string | null;
-  report: NutritionReport | null;
+  startedAt?: string;
+  submittedAt?: string;
+  completedAt?: string | null;
+  message?: string | null;
+  errorMessage?: string | null;
+  result?: NutritionReport | null;
+  report?: NutritionReport | null;
 }
+

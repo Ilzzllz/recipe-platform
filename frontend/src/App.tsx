@@ -8,6 +8,7 @@ import { RecipeFormModal } from './components/RecipeFormModal';
 import { CategoryIngredientManager } from './components/CategoryIngredientManager';
 import { ConfirmModal } from './components/ConfirmModal';
 import { ToastContainer } from './components/ToastContainer';
+import { NutritionModal } from './components/NutritionModal';
 import { Plus, Search, Filter, BookOpen, Layers, ChefHat, Carrot, X } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -45,6 +46,7 @@ export const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
+  const [nutritionRecipe, setNutritionRecipe] = useState<Recipe | null>(null);
   const [recipeToDelete, setRecipeToDelete] = useState<{ id: number; title: string } | null>(null);
 
   // Nutrition Async Task State
@@ -170,8 +172,7 @@ export const App: React.FC = () => {
       setIsPollingNutrition(true);
       const task = await api.startNutritionReport(recipe.id);
       setNutritionTask(task);
-      setViewingRecipe(recipe);
-      addToast('info', 'Запущен расчет КБЖУ через внешний сервис Open Food Facts');
+      addToast('info', `Запущен расчет КБЖУ для "${recipe.title}"...`);
 
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
 
@@ -192,12 +193,17 @@ export const App: React.FC = () => {
           if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
           setIsPollingNutrition(false);
         }
-      }, 1200);
+      }, 1000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Ошибка при запуске расчета';
       addToast('error', msg, 'Ошибка сервиса');
       setIsPollingNutrition(false);
     }
+  };
+
+  const handleCardCalculateNutrition = (recipe: Recipe) => {
+    setNutritionRecipe(recipe);
+    handleCalculateNutrition(recipe);
   };
 
   // Filter recipes by category
@@ -366,7 +372,7 @@ export const App: React.FC = () => {
                     onView={handleViewRecipe}
                     onEdit={handleEditRecipe}
                     onDelete={handleDeleteRecipePrompt}
-                    onCalculateNutrition={handleCalculateNutrition}
+                    onCalculateNutrition={handleCardCalculateNutrition}
                   />
                 ))}
               </div>
@@ -385,6 +391,16 @@ export const App: React.FC = () => {
           />
         )}
       </main>
+
+      {/* Dedicated Nutrition Modal for Direct Card Action */}
+      <NutritionModal
+        recipe={nutritionRecipe}
+        isOpen={!!nutritionRecipe}
+        onClose={() => setNutritionRecipe(null)}
+        onRecalculate={handleCalculateNutrition}
+        nutritionTask={nutritionTask}
+        isPolling={isPollingNutrition}
+      />
 
       {/* Recipe Details Modal */}
       <RecipeModal
