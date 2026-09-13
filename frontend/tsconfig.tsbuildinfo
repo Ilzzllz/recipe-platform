@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/api/client.ts","./src/components/categoryingredientmanager.tsx","./src/components/concurrencysection.tsx","./src/components/filtersection.tsx","./src/components/navbar.tsx","./src/components/recipecard.tsx","./src/components/recipeformmodal.tsx","./src/components/recipemodal.tsx","./src/types/index.ts"],"version":"5.6.3"}

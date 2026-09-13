@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Recipe, RecipeCreatePayload, Category, Ingredient, User } from '../types';
-import { X, Plus, Trash2, ArrowUp, ArrowDown, Network, Database } from 'lucide-react';
+import { ApiError } from '../api/client';
+import { X, Plus, Trash2, ArrowUp, ArrowDown, Network, Database, AlertCircle } from 'lucide-react';
 
 interface RecipeFormModalProps {
   isOpen: boolean;
@@ -30,7 +31,8 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
     { stepOrder: 1, description: '' },
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const isEditing = !!initialRecipe;
 
@@ -53,13 +55,25 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       setSelectedIngredientIds([]);
       setSteps([{ stepOrder: 1, description: '' }]);
     }
-    setError(null);
+    setGlobalError(null);
+    setFieldErrors({});
   }, [initialRecipe, isOpen, users, categories]);
 
   if (!isOpen) return null;
 
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
   const handleAddStep = () => {
     setSteps((prev) => [...prev, { stepOrder: prev.length + 1, description: '' }]);
+    clearFieldError('steps');
   };
 
   const handleRemoveStep = (index: number) => {
@@ -68,12 +82,14 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       .filter((_, idx) => idx !== index)
       .map((step, idx) => ({ ...step, stepOrder: idx + 1 }));
     setSteps(newSteps);
+    clearFieldError('steps');
   };
 
   const handleStepChange = (index: number, val: string) => {
     setSteps((prev) =>
       prev.map((step, idx) => (idx === index ? { ...step, description: val } : step))
     );
+    clearFieldError('steps');
   };
 
   const handleMoveStep = (index: number, direction: 'up' | 'down') => {
@@ -90,38 +106,47 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
     setSelectedIngredientIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
+    clearFieldError('ingredientIds');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setGlobalError(null);
+    const errors: Record<string, string> = {};
 
     if (!title.trim()) {
-      setError('Укажите название рецепта');
-      return;
+      errors.title = 'Пожалуйста, введите название рецепта';
+    } else if (title.trim().length < 3) {
+      errors.title = 'Название должно содержать не менее 3 символов';
     }
+
     if (!description.trim()) {
-      setError('Укажите описание рецепта');
-      return;
+      errors.description = 'Пожалуйста, добавьте краткое описание';
     }
+
     if (!authorId) {
-      setError('Выберите автора рецепта');
-      return;
+      errors.authorId = 'Выберите автора рецепта';
     }
+
     if (!categoryId) {
-      setError('Выберите категорию рецепта');
-      return;
+      errors.categoryId = 'Выберите категорию рецепта';
     }
+
     if (selectedIngredientIds.length === 0) {
-      setError('Выберите хотя бы один ингредиент (связь ManyToMany)');
-      return;
+      errors.ingredientIds = 'Выберите хотя бы один ингредиент из списка';
     }
+
     const cleanSteps = steps
       .map((s, idx) => ({ stepOrder: idx + 1, description: s.description.trim() }))
       .filter((s) => s.description.length > 0);
 
     if (cleanSteps.length === 0) {
-      setError('Добавьте хотя бы один шаг приготовления с описанием (связь OneToMany)');
+      errors.steps = 'Добавьте хотя бы один шаг приготовления с описанием';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setGlobalError('Пожалуйста, исправьте ошибки в форме перед отправкой');
       return;
     }
 
@@ -139,8 +164,15 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       await onSubmit(payload, initialRecipe?.id);
       onClose();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Произошла ошибка при сохранении';
-      setError(message);
+      if (err instanceof ApiError) {
+        if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+          setFieldErrors(err.fieldErrors);
+        }
+        setGlobalError(err.message || `Ошибка сервера (HTTP ${err.statusCode})`);
+      } else {
+        const message = err instanceof Error ? err.message : 'Произошла непредвиденная ошибка при сохранении';
+        setGlobalError(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -153,10 +185,10 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <h2 className="text-xl font-bold text-slate-900">
-              {isEditing ? `Редактирование рецепта #${initialRecipe.id}` : 'Создание нового рецепта'}
+              {isEditing ? `Редактирование: ${initialRecipe.title}` : 'Создание нового рецепта'}
             </h2>
             <p className="text-xs text-slate-500">
-              Заполните поля формы для отправки на REST API Spring Boot (POST / PUT)
+              Заполните информацию о блюде, выберите ингредиенты и добавьте пошаговые инструкции
             </p>
           </div>
           <button
@@ -169,9 +201,10 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-          {error && (
-            <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-medium">
-              {error}
+          {globalError && (
+            <div className="p-3.5 bg-red-50 text-red-700 border border-red-200 rounded-2xl text-xs font-medium flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+              <span>{globalError}</span>
             </div>
           )}
 
@@ -179,30 +212,48 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Название рецепта *
+                Название рецепта <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Например: Тыквенный крем-суп с сухариками"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                required
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  clearFieldError('title');
+                }}
+                placeholder="Например: Тыквенный крем-суп с мускатным орехом"
+                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 ${
+                  fieldErrors.title
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50/30'
+                    : 'border-slate-300 focus:ring-orange-500 focus:border-transparent'
+                }`}
               />
+              {fieldErrors.title && (
+                <p className="text-xs text-red-600 mt-1 font-medium">{fieldErrors.title}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Краткое описание *
+                Краткое описание <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Нежный осенний суп-пюре со сливками и специями..."
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  clearFieldError('description');
+                }}
+                placeholder="Ароматный осенний суп-пюре с добавлением кокосовых сливок и хрустящих сухариков..."
                 rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                required
+                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-colors focus:outline-none focus:ring-2 ${
+                  fieldErrors.description
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50/30'
+                    : 'border-slate-300 focus:ring-orange-500 focus:border-transparent'
+                }`}
               />
+              {fieldErrors.description && (
+                <p className="text-xs text-red-600 mt-1 font-medium">{fieldErrors.description}</p>
+              )}
             </div>
           </div>
 
@@ -210,34 +261,49 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Автор (User ManyToOne) *
+                Автор рецепта <span className="text-red-500">*</span>
               </label>
               <select
                 value={authorId}
-                onChange={(e) => setAuthorId(Number(e.target.value))}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white"
-                required
+                onChange={(e) => {
+                  setAuthorId(Number(e.target.value));
+                  clearFieldError('authorId');
+                }}
+                className={`w-full px-3 py-2.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 ${
+                  fieldErrors.authorId
+                    ? 'border-red-300 focus:ring-red-400'
+                    : 'border-slate-300 focus:ring-orange-500'
+                }`}
               >
                 <option value="" disabled>
                   Выберите автора
                 </option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.username} ({u.email || `id: ${u.id}`})
+                    {u.username} ({u.email || `ID: ${u.id}`})
                   </option>
                 ))}
               </select>
+              {fieldErrors.authorId && (
+                <p className="text-xs text-red-600 mt-1 font-medium">{fieldErrors.authorId}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Категория (Category ManyToOne) *
+                Категория блюда <span className="text-red-500">*</span>
               </label>
               <select
                 value={categoryId}
-                onChange={(e) => setCategoryId(Number(e.target.value))}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white"
-                required
+                onChange={(e) => {
+                  setCategoryId(Number(e.target.value));
+                  clearFieldError('categoryId');
+                }}
+                className={`w-full px-3 py-2.5 rounded-xl border text-sm bg-white focus:outline-none focus:ring-2 ${
+                  fieldErrors.categoryId
+                    ? 'border-red-300 focus:ring-red-400'
+                    : 'border-slate-300 focus:ring-orange-500'
+                }`}
               >
                 <option value="" disabled>
                   Выберите категорию
@@ -248,19 +314,33 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                   </option>
                 ))}
               </select>
+              {fieldErrors.categoryId && (
+                <p className="text-xs text-red-600 mt-1 font-medium">{fieldErrors.categoryId}</p>
+              )}
             </div>
           </div>
 
           {/* ManyToMany: Ingredients Selection */}
-          <div className="rounded-2xl border-2 border-emerald-100 bg-emerald-50/20 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Network className="w-4 h-4 text-emerald-600" />
-              <label className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
-                Ингредиенты (ManyToMany связь) *
-              </label>
+          <div
+            className={`rounded-2xl border-2 p-4 transition-colors ${
+              fieldErrors.ingredientIds
+                ? 'border-red-300 bg-red-50/20'
+                : 'border-emerald-100 bg-emerald-50/20'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Network className="w-4 h-4 text-emerald-600" />
+                <label className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
+                  Ингредиенты <span className="text-red-500">*</span>
+                </label>
+              </div>
+              <span className="text-xs font-semibold text-emerald-800 bg-emerald-100/60 px-2 py-0.5 rounded-lg">
+                Выбрано: {selectedIngredientIds.length}
+              </span>
             </div>
             <p className="text-xs text-slate-500 mb-3">
-              Нажмите на ингредиент, чтобы привязать его к рецепту через промежуточную таблицу связей.
+              Нажмите на ингредиент, чтобы привязать его к рецепту.
             </p>
 
             <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
@@ -283,31 +363,35 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                 );
               })}
             </div>
-            <div className="mt-2 text-right text-xs font-semibold text-emerald-800">
-              Выбрано: {selectedIngredientIds.length}
-            </div>
+            {fieldErrors.ingredientIds && (
+              <p className="text-xs text-red-600 mt-2 font-medium">{fieldErrors.ingredientIds}</p>
+            )}
           </div>
 
           {/* OneToMany: Steps List */}
-          <div className="rounded-2xl border-2 border-blue-100 bg-blue-50/20 p-4 space-y-3">
+          <div
+            className={`rounded-2xl border-2 p-4 space-y-3 transition-colors ${
+              fieldErrors.steps ? 'border-red-300 bg-red-50/20' : 'border-blue-100 bg-blue-50/20'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Database className="w-4 h-4 text-blue-600" />
                 <label className="text-xs font-bold text-blue-950 uppercase tracking-wider">
-                  Шаги приготовления (OneToMany связь) *
+                  Шаги приготовления <span className="text-red-500">*</span>
                 </label>
               </div>
               <button
                 type="button"
                 onClick={handleAddStep}
-                className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Добавить шаг
               </button>
             </div>
             <p className="text-xs text-slate-500">
-              Каждый шаг является дочерней сущностью CookingStep с собственным порядковым номером stepOrder.
+              Опишите действия по порядку. Вы можете перемещать шаги вверх и вниз.
             </p>
 
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -325,7 +409,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                     onChange={(e) => handleStepChange(idx, e.target.value)}
                     placeholder={`Описание действия на шаге ${step.stepOrder}...`}
                     className="flex-1 text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    required
                   />
 
                   {/* Move Up/Down */}
@@ -335,6 +418,7 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                       disabled={idx === 0}
                       onClick={() => handleMoveStep(idx, 'up')}
                       className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
+                      title="Переместить выше"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
                     </button>
@@ -343,6 +427,7 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                       disabled={idx === steps.length - 1}
                       onClick={() => handleMoveStep(idx, 'down')}
                       className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
+                      title="Переместить ниже"
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
@@ -354,12 +439,16 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                     disabled={steps.length === 1}
                     onClick={() => handleRemoveStep(idx)}
                     className="p-1 text-slate-400 hover:text-red-600 disabled:opacity-20"
+                    title="Удалить шаг"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
             </div>
+            {fieldErrors.steps && (
+              <p className="text-xs text-red-600 mt-2 font-medium">{fieldErrors.steps}</p>
+            )}
           </div>
 
           {/* Footer Submit */}

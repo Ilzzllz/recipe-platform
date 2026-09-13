@@ -17,7 +17,7 @@ export interface ApiErrorResponse {
   fieldErrors?: Record<string, string>;
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   statusCode: number;
   fieldErrors?: Record<string, string>;
 
@@ -49,7 +49,8 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const errorMsg = data?.message || `Ошибка сервера: HTTP ${response.status}`;
-    throw new ApiError(response.status, errorMsg, data?.fieldErrors);
+    const fieldErrors = data?.details?.fieldErrors || data?.details?.violations || data?.fieldErrors;
+    throw new ApiError(response.status, errorMsg, fieldErrors);
   }
 
   return data as T;

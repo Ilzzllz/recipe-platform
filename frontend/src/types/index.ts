@@ -1,3 +1,10 @@
+export interface Toast {
+  id: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  title?: string;
+  message: string;
+}
+
 export interface Author {
   id: number;
   username: string;

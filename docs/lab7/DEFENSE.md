@@ -172,10 +172,20 @@
 ---
 
 ### Вопрос 5 (Ловушка по многопоточности и данным):
-> *«В карточке рецепта есть счетчики просмотров из Лабораторной 6. Как наш клиент взаимодействует с этой логикой?»*
+> *«Как клиент взаимодействует с многопоточной логикой из Лабораторной 6?»*
 
 **Правильный ответ**:
-1. Каждый раз, когда пользователь кликает кнопку «Детали» на карточке любого рецепта, клиент отправляет запрос `GET /api/recipes/{id}`.
-2. В контроллере [`RecipeController.java`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/src/main/java/com/example/recipeplatform/controller/RecipeController.java#L104) перед отдачей DTO вызывается `recipeViewCounterService.recordView()`.
-3. Этот метод инкрементирует сразу 3 счетчика: потокобезопасный `AtomicLong`, метод с `synchronized` и незащищенную переменную `int`.
-4. В табе «Многопоточность» в компоненте [`ConcurrencySection.tsx`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/frontend/src/components/ConcurrencySection.tsx) пользователь может нажать «Запустить атаку гонки». Сервер запустит 50 параллельных потоков, одновременно выполняющих инкремент, и клиент в реальном времени отобразит разницу между ожидаемым числом и потерянными записями (`Lost Updates`).
+1. Каждый раз, когда пользователь открывает рецепт («Рецепт» или клик по карточке), клиент отправляет запрос `GET /api/recipes/{id}`.
+2. В контроллере [`RecipeController.java`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/src/main/java/com/example/recipeplatform/controller/RecipeController.java#L104) перед отдачей DTO вызывается `recipeViewCounterService.recordView()`, который безопасно инкрементирует счетчик через `AtomicLong`.
+3. При нажатии кнопки «КБЖУ» клиент вызывает эндпоинт `POST /api/recipes/{id}/nutrition-report`, который запускает задачу в фоновом `@Async` пуле потоков Spring Boot с запросом к внешнему сервису Open Food Facts API, а клиент опрашивает статус задачи (`GET /api/recipes/nutrition-report/{taskId}`) до ее завершения.
+4. Синтетические стендовые ручки тестирования гонки данных (`/api/recipes/demo/race-condition` и статистика `/views/stats`) оставлены на уровне чистого REST API и тестируются через Swagger или Postman/JMeter, чтобы клиентский интерфейс оставался чистым и ориентированным на конечного пользователя.
+
+---
+
+### Вопрос 6 (Ловушка по обработке ошибок и UX):
+> *«Что происходит, если бэкенд возвращает ошибку (например, 400 при некорректных данных или 500 при сбое)? Как это видит пользователь?»*
+
+**Правильный ответ**:
+1. В HTTP-клиенте [`frontend/src/api/client.ts`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/frontend/src/api/client.ts) перехватываются любые ответы с `!response.ok` и преобразуются в класс `ApiError`.
+2. Если ошибка вызвана нарушением валидации формы (HTTP 400 Bad Request с телом `details.fieldErrors` от нашего Spring `GlobalExceptionHandler`), компонент формы [`RecipeFormModal.tsx`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/frontend/src/components/RecipeFormModal.tsx) подсвечивает конкретное поле красной рамкой и выводит подсказку прямо под полем ввода.
+3. Любые общие ошибки (сеть недоступна, сбой сервера HTTP 500) выводятся через современную систему всплывающих Toast-уведомлений [`ToastContainer.tsx`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/frontend/src/components/ToastContainer.tsx), что предотвращает «падение» интерфейса и наглядно информирует пользователя.

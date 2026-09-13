@@ -37,6 +37,7 @@ build/
 ### Node & Frontend ###
 **/node_modules/
 frontend/dist/
+*.tsbuildinfo
 
 ### Application Logs ###
 logs/

@@ -38,6 +38,7 @@ public class NutritionReportService {
     private final ObjectMapper objectMapper;
     private final Map<UUID, AsyncTaskResponseDto> taskStore = new ConcurrentHashMap<>();
 
+    @org.springframework.beans.factory.annotation.Autowired
     public NutritionReportService(RecipeRepository recipeRepository, ObjectMapper objectMapper) {
         this.recipeRepository = recipeRepository;
         this.objectMapper = objectMapper;
