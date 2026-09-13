@@ -1,5 +1,6 @@
 HELP.md
 target/
+bin/
 ${project.build.directory}/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -32,3 +33,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Node & Frontend ###
+**/node_modules/
+frontend/dist/
+
+### Application Logs ###
+logs/
+*.log
