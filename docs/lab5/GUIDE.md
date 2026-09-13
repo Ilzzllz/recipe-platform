@@ -248,3 +248,23 @@ cmd /c .\mvnw.cmd test -Dtest="*Service*Test"
 ```
 Время выполнения: менее 7 секунд.
 В IntelliJ IDEA при запуске пакета `com.example.recipeplatform.service` с покрытием (Run with Coverage) достигается **100% Class, Method и Line Coverage**.
+
+---
+
+## Справочно: Автоматическое заполнение базы данными (Сидирование)
+
+### Что это такое
+Чтобы при запуске приложения база данных не была пустой, в проекте реализован сидер начальных данных: [`DataInitializer.java`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/src/main/java/com/example/recipeplatform/config/DataInitializer.java).
+
+### Как пользоваться
+В файле [`src/main/resources/application.properties`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/src/main/resources/application.properties) есть настройка:
+```properties
+app.seed.enabled=true
+```
+- **Когда `true` (по умолчанию)**: При первом запуске бэкенда в базу автоматически добавляются тестовые пользователи (`anna`, `nikita`), категории (`Soups`, `Desserts`), ингредиенты и готовые рецепты (Борщ, Тыквенный суп).
+- **Если преподаватель просит показать запуск с пустой базой**:
+  1. Измените значение на `app.seed.enabled=false`.
+  2. Перезапустите приложение — база будет абсолютно чистой.
+
+### Что ответить преподавателю, если спросит про сидирование:
+> *«В классе `DataInitializer` реализован стандартный бин Spring `CommandLineRunner`. Он срабатывает один раз при старте контекста приложения и, если параметр `app.seed.enabled` равен `true`, сохраняет стартовый набор сущностей через репозитории в одной транзакции»*.
