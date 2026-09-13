@@ -180,6 +180,20 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
                     </tbody>
                   </table>
                 </div>
+
+                {/* Explanation Note for Data Sources */}
+                <div className="mt-4 p-3.5 bg-white rounded-xl border border-slate-200/80 text-xs text-slate-600 leading-relaxed space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+                    <span>Что означают источники данных?</span>
+                  </div>
+                  <p className="text-[11px]">
+                    <strong className="text-emerald-700">Open Food Facts</strong> — точные данные найдены и загружены из открытой мировой базы продуктов.
+                  </p>
+                  <p className="text-[11px]">
+                    <strong className="text-amber-700">Кулинарная оценка (Fallback)</strong> — стандартный базовый расчет пищевой ценности. Используется автоматически, если ингредиент написан с опечаткой или отсутствует в мировой базе. Благодаря этому расчет не падает с ошибкой, а сервер работает отказоустойчиво.
+                  </p>
+                </div>
               </div>
             </div>
           )}

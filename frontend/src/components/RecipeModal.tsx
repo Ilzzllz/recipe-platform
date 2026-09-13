@@ -303,6 +303,19 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                           </tbody>
                         </table>
                       </div>
+
+                      {/* Explanation Note for Data Sources */}
+                      <div className="p-3 bg-white rounded-xl border border-purple-100 text-xs text-slate-600 leading-relaxed space-y-1">
+                        <span className="font-bold text-slate-800 text-[11px] block">
+                          Что означают источники данных?
+                        </span>
+                        <p className="text-[11px]">
+                          <strong className="text-emerald-700">Open Food Facts</strong> — точные данные найдены в открытой мировой базе продуктов.
+                        </p>
+                        <p className="text-[11px]">
+                          <strong className="text-amber-700">Кулинарная оценка (Fallback)</strong> — средняя кулинарная оценка при опечатках в названии или отсутствии продукта в базе, защищающая приложение от падения.
+                        </p>
+                      </div>
                     </div>
                   );
                 })()}
