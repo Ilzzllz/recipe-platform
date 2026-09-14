@@ -13,19 +13,12 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class RecipeViewCounterService {
 
-    // Non-thread-safe counter: vulnerable to lost updates under concurrency
     private int unsafeCounter = 0;
 
-    // Thread-safe counter 1: AtomicLong using Lock-Free Compare-And-Swap (CAS)
     private final AtomicLong atomicCounter = new AtomicLong(0);
 
-    // Thread-safe counter 2: synchronized monitor lock
     private int synchronizedCounter = 0;
 
-    /**
-     * Called whenever a recipe is viewed (e.g. GET /api/recipes/{id}).
-     * Increments all three counters to allow direct comparison under load (e.g. via JMeter).
-     */
     public void recordView() {
         incrementUnsafe();
         incrementAtomic();
@@ -33,7 +26,6 @@ public class RecipeViewCounterService {
     }
 
     public void incrementUnsafe() {
-        // Non-atomic read-modify-write operation
         unsafeCounter++;
     }
 
@@ -67,11 +59,7 @@ public class RecipeViewCounterService {
         return stats;
     }
 
-    /**
-     * Demonstrates race condition programmatically using an ExecutorService with 50+ threads.
-     */
     public RaceConditionDemoResultDto demonstrateRaceCondition(int threadCount, int incrementsPerThread) {
-        // Reset local demo counters
         class LocalDemoCounters {
             int unsafe = 0;
             final AtomicLong atomic = new AtomicLong(0);
@@ -92,7 +80,6 @@ public class RecipeViewCounterService {
         for (int i = 0; i < threadCount; i++) {
             executor.submit(() -> {
                 try {
-                    // All threads wait for the start signal to maximize contention
                     startLatch.await();
                     for (int j = 0; j < incrementsPerThread; j++) {
                         demo.unsafe++;
@@ -107,7 +94,6 @@ public class RecipeViewCounterService {
             });
         }
 
-        // Release all threads at once
         startLatch.countDown();
 
         try {

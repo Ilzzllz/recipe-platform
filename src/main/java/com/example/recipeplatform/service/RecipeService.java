@@ -131,7 +131,7 @@ public class RecipeService {
     public Page<RecipeFilterDto> findByAuthorAndCategoryJPQL(String authorUsername,
                                                              String categoryName,
                                                              Pageable pageable) {
-        CacheKey key = CacheKey.from("jpql", authorUsername, categoryName, pageable);
+        CacheKey key = CacheKey.from("JPQL", authorUsername, categoryName, pageable);
         Page<RecipeFilterDto> cached = recipeQueryCacheService.get(key);
         if (cached != null) {
             return cached;
