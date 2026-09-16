@@ -51,10 +51,6 @@ public class NutritionReportService {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Initiates the asynchronous computation of a recipe's nutritional report.
-     * Immediately returns a unique task ID while background processing runs concurrently.
-     */
     public UUID startNutritionReport(Long recipeId) {
         Recipe recipe = recipeRepository.findByIdWithFetchJoin(recipeId)
                 .orElseThrow(() -> new NotFoundException("Recipe with id " + recipeId + " was not found"));
@@ -67,15 +63,11 @@ public class NutritionReportService {
         task.setMessage("Fetching nutrition data from Open Food Facts API for " + recipe.getIngredients().size() + " ingredients...");
         taskStore.put(taskId, task);
 
-        // Dispatch background execution
         calculateNutritionAsync(recipeId, taskId);
 
         return taskId;
     }
 
-    /**
-     * Checks the current status of an asynchronous background task.
-     */
     public AsyncTaskResponseDto getTaskStatus(UUID taskId) {
         AsyncTaskResponseDto task = taskStore.get(taskId);
         if (task == null) {
@@ -84,9 +76,6 @@ public class NutritionReportService {
         return task;
     }
 
-    /**
-     * Asynchronous execution worker running on the dedicated ThreadPoolTaskExecutor.
-     */
     @Async("recipeTaskExecutor")
     public CompletableFuture<NutritionReportDto> calculateNutritionAsync(Long recipeId, UUID taskId) {
         AsyncTaskResponseDto task = taskStore.get(taskId);
@@ -167,7 +156,6 @@ public class NutritionReportService {
                     ingredientName, ex.getMessage());
         }
 
-        // Graceful fallback: culinary estimation if offline or item not indexed
         return new IngredientNutritionDto(ingredientName, 45.0, 1.5, 0.5, 9.0, "Standard culinary estimate");
     }
 
