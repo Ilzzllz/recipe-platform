@@ -80,14 +80,13 @@ public class RecipeViewCounterService {
         for (int i = 0; i < threadCount; i++) {
             executor.submit(() -> {
                 try {
-                    startLatch.await();
-                    for (int j = 0; j < incrementsPerThread; j++) {
-                        demo.unsafe++;
-                        demo.atomic.incrementAndGet();
-                        demo.incSync();
+                    if (awaitQuietly(startLatch)) {
+                        for (int j = 0; j < incrementsPerThread; j++) {
+                            demo.unsafe++;
+                            demo.atomic.incrementAndGet();
+                            demo.incSync();
+                        }
                     }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
                 } finally {
                     finishLatch.countDown();
                 }
@@ -97,9 +96,7 @@ public class RecipeViewCounterService {
         startLatch.countDown();
 
         try {
-            finishLatch.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            awaitWithTimeout(finishLatch, 10, TimeUnit.SECONDS);
         } finally {
             executor.shutdown();
         }
@@ -118,5 +115,28 @@ public class RecipeViewCounterService {
         result.setLostUpdates(lost);
         result.setExecutionTimeMs(executionTimeMs);
         return result;
+    }
+
+    boolean awaitQuietly(CountDownLatch latch) {
+        try {
+            latch.await();
+            return true;
+        } catch (InterruptedException e) {
+            handleInterruption(e);
+            return false;
+        }
+    }
+
+    boolean awaitWithTimeout(CountDownLatch latch, long timeout, TimeUnit unit) {
+        try {
+            return latch.await(timeout, unit);
+        } catch (InterruptedException e) {
+            handleInterruption(e);
+            return false;
+        }
+    }
+
+    void handleInterruption(InterruptedException e) {
+        Thread.currentThread().interrupt();
     }
 }

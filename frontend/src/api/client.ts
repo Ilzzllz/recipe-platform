@@ -57,7 +57,6 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  // Recipes
   getRecipes: () => request<Recipe[]>('/api/recipes'),
   getRecipeById: (id: number) => request<Recipe>(`/api/recipes/${id}`),
   searchRecipesByTitle: (title: string) => request<Recipe[]>(`/api/recipes/search?title=${encodeURIComponent(title)}`),
@@ -76,7 +75,6 @@ export const api = {
       method: 'DELETE',
     }),
 
-  // Filtering (JPQL / Native)
   filterRecipesJPQL: (authorUsername: string, categoryName: string, page = 0, size = 10) =>
     request<RecipeFilterPage>(
       `/api/recipes/filter/jpql?authorUsername=${encodeURIComponent(authorUsername)}&categoryName=${encodeURIComponent(
@@ -90,7 +88,6 @@ export const api = {
       )}&page=${page}&size=${size}`
     ),
 
-  // Categories
   getCategories: () => request<Category[]>('/api/categories'),
   createCategory: (name: string, description?: string) =>
     request<Category>('/api/categories', {
@@ -102,7 +99,6 @@ export const api = {
       method: 'DELETE',
     }),
 
-  // Ingredients
   getIngredients: () => request<Ingredient[]>('/api/ingredients'),
   createIngredient: (name: string) =>
     request<Ingredient>('/api/ingredients', {
@@ -114,7 +110,6 @@ export const api = {
       method: 'DELETE',
     }),
 
-  // Users
   getUsers: () => request<User[]>('/api/users'),
   createUser: (username: string, email: string) =>
     request<User>('/api/users', {
@@ -122,7 +117,6 @@ export const api = {
       body: JSON.stringify({ username, email }),
     }),
 
-  // Concurrency & Demos (Lab 6)
   getViewStats: () => request<CounterStats>('/api/recipes/views/stats'),
   resetViewCounters: () =>
     request<void>('/api/recipes/views/reset', {
@@ -133,7 +127,6 @@ export const api = {
       method: 'POST',
     }),
 
-  // Asynchronous Nutrition calculation (Lab 6)
   startNutritionReport: (recipeId: number) =>
     request<NutritionReportTask>(`/api/recipes/${recipeId}/nutrition-report`, {
       method: 'POST',

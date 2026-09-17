@@ -295,7 +295,7 @@ class RecipeServiceUnitTest {
     @DisplayName("findByAuthorAndCategoryJPQL should return cached page if available")
     void findByAuthorAndCategoryJPQLShouldReturnFromCache() {
         Pageable pageable = PageRequest.of(0, 10);
-        CacheKey key = CacheKey.from("jpql", "anna", "soups", pageable);
+        CacheKey key = CacheKey.from("JPQL", "anna", "soups", pageable);
         Page<RecipeFilterDto> cachedPage = new PageImpl<>(List.of(new RecipeFilterDto()));
 
         when(recipeQueryCacheService.get(key)).thenReturn(cachedPage);
@@ -310,7 +310,7 @@ class RecipeServiceUnitTest {
     @DisplayName("findByAuthorAndCategoryJPQL should query repository and cache result when not in cache")
     void findByAuthorAndCategoryJPQLShouldQueryRepositoryAndCache() {
         Pageable pageable = PageRequest.of(0, 10);
-        CacheKey key = CacheKey.from("jpql", "anna", "soups", pageable);
+        CacheKey key = CacheKey.from("JPQL", "anna", "soups", pageable);
         when(recipeQueryCacheService.get(key)).thenReturn(null);
 
         RecipeFilterProjection projection = mock(RecipeFilterProjection.class);

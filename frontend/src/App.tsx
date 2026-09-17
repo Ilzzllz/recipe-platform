@@ -14,20 +14,16 @@ import { Plus, Search, Filter, BookOpen, Layers, ChefHat, Carrot, X } from 'luci
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'recipes' | 'data'>('recipes');
 
-  // Core Data State
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
-  // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
 
-  // Loading & Global Status
   const [isLoading, setIsLoading] = useState(true);
 
-  // Floating Toast Notifications
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback(
@@ -42,19 +38,16 @@ export const App: React.FC = () => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Modals State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [nutritionRecipe, setNutritionRecipe] = useState<Recipe | null>(null);
   const [recipeToDelete, setRecipeToDelete] = useState<{ id: number; title: string } | null>(null);
 
-  // Nutrition Async Task State
   const [nutritionTask, setNutritionTask] = useState<NutritionReportTask | null>(null);
   const [isPollingNutrition, setIsPollingNutrition] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch all core data from REST API
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -83,7 +76,6 @@ export const App: React.FC = () => {
     };
   }, [loadData]);
 
-  // Recipe search handler
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
@@ -110,7 +102,6 @@ export const App: React.FC = () => {
     loadData();
   };
 
-  // Open recipe details modal (also increments views in backend)
   const handleViewRecipe = async (recipe: Recipe) => {
     try {
       const fullRecipe = await api.getRecipeById(recipe.id);
@@ -121,18 +112,15 @@ export const App: React.FC = () => {
     }
   };
 
-  // Open edit modal
   const handleEditRecipe = (recipe: Recipe) => {
     setEditingRecipe(recipe);
     setIsFormOpen(true);
   };
 
-  // Request recipe delete
   const handleDeleteRecipePrompt = (id: number, title: string) => {
     setRecipeToDelete({ id, title });
   };
 
-  // Confirm delete
   const handleConfirmDeleteRecipe = async () => {
     if (!recipeToDelete) return;
     try {
@@ -150,7 +138,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Create or Update submit
   const handleSubmitRecipe = async (payload: RecipeCreatePayload, id?: number) => {
     if (id) {
       const updated = await api.updateRecipe(id, payload);
@@ -166,7 +153,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Start async nutrition calculation with polling
   const handleCalculateNutrition = async (recipe: Recipe) => {
     try {
       setIsPollingNutrition(true);
@@ -206,7 +192,6 @@ export const App: React.FC = () => {
     handleCalculateNutrition(recipe);
   };
 
-  // Filter recipes by category
   const filteredRecipes = recipes.filter((r) => {
     if (selectedCategoryFilter !== 'ALL') {
       return r.category?.name === selectedCategoryFilter;

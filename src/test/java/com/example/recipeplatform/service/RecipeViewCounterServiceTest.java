@@ -2,9 +2,12 @@ package com.example.recipeplatform.service;
 
 import com.example.recipeplatform.dto.CounterStatsDto;
 import com.example.recipeplatform.dto.RaceConditionDemoResultDto;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,6 +18,11 @@ class RecipeViewCounterServiceTest {
     @BeforeEach
     void setUp() {
         counterService = new RecipeViewCounterService();
+    }
+
+    @AfterEach
+    void tearDown() {
+        Thread.interrupted();
     }
 
     @Test
@@ -51,7 +59,7 @@ class RecipeViewCounterServiceTest {
     void demonstrateRaceConditionShouldShowDifference() {
         int threads = 50;
         int incrementsPerThread = 100;
-        long expectedTotal = (long) threads * incrementsPerThread; // 5000
+        long expectedTotal = (long) threads * incrementsPerThread;
 
         RaceConditionDemoResultDto result = counterService.demonstrateRaceCondition(threads, incrementsPerThread);
 
@@ -62,5 +70,43 @@ class RecipeViewCounterServiceTest {
         assertThat(result.getSynchronizedCounterResult()).isEqualTo(expectedTotal);
         assertThat(result.getUnsafeCounterResult()).isLessThanOrEqualTo(expectedTotal);
         assertThat(result.getExecutionTimeMs()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("handleInterruption should restore the interrupted flag on the current thread")
+    void handleInterruptionShouldRestoreFlag() {
+        Thread.interrupted();
+
+        counterService.handleInterruption(new InterruptedException("test"));
+
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+
+        Thread.interrupted();
+    }
+
+    @Test
+    @DisplayName("awaitQuietly should return false and restore flag when interrupted")
+    void awaitQuietlyShouldHandleInterruption() {
+        CountDownLatch latch = new CountDownLatch(1);
+        Thread.currentThread().interrupt();
+
+        boolean result = counterService.awaitQuietly(latch);
+
+        assertThat(result).isFalse();
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        Thread.interrupted();
+    }
+
+    @Test
+    @DisplayName("awaitWithTimeout should return false and restore flag when interrupted")
+    void awaitWithTimeoutShouldHandleInterruption() {
+        CountDownLatch latch = new CountDownLatch(1);
+        Thread.currentThread().interrupt();
+
+        boolean result = counterService.awaitWithTimeout(latch, 1, TimeUnit.SECONDS);
+
+        assertThat(result).isFalse();
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        Thread.interrupted();
     }
 }
