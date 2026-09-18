@@ -20,7 +20,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
-          {/* Logo & Title */}
           <div
             className="flex items-center space-x-3 cursor-pointer select-none"
             onClick={() => setActiveTab('recipes')}
@@ -38,7 +37,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Navigation Tabs */}
           <nav className="flex space-x-1.5 bg-slate-100 p-1 rounded-2xl">
             <button
               onClick={() => setActiveTab('recipes')}
@@ -65,7 +63,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </nav>
 
-          {/* Quick Actions */}
           <div className="flex items-center space-x-2">
             <button
               onClick={onRefresh}

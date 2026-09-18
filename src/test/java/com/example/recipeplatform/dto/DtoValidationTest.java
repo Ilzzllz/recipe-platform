@@ -33,9 +33,10 @@ class DtoValidationTest {
 
         Set<ConstraintViolation<UserCreateDto>> violations = validator.validate(dto);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("username"));
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("email"));
+        assertThat(violations)
+                .isNotEmpty()
+                .anyMatch(v -> v.getPropertyPath().toString().equals("username"))
+                .anyMatch(v -> v.getPropertyPath().toString().equals("email"));
     }
 
     @Test
@@ -46,8 +47,9 @@ class DtoValidationTest {
 
         Set<ConstraintViolation<CategoryCreateDto>> violations = validator.validate(dto);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("name"));
+        assertThat(violations)
+                .isNotEmpty()
+                .anyMatch(v -> v.getPropertyPath().toString().equals("name"));
     }
 
     @Test
@@ -61,14 +63,14 @@ class DtoValidationTest {
         recipeDto.setIngredientIds(Set.of(1L));
 
         RecipeStepCreateDto invalidStep = new RecipeStepCreateDto();
-        // stepOrder is null, description is blank
         invalidStep.setDescription("");
         recipeDto.setSteps(List.of(invalidStep));
 
         Set<ConstraintViolation<RecipeCreateDto>> violations = validator.validate(recipeDto);
 
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().contains("steps[0].stepOrder"));
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().contains("steps[0].description"));
+        assertThat(violations)
+                .isNotEmpty()
+                .anyMatch(v -> v.getPropertyPath().toString().contains("steps[0].stepOrder"))
+                .anyMatch(v -> v.getPropertyPath().toString().contains("steps[0].description"));
     }
 }

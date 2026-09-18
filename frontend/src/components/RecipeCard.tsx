@@ -20,7 +20,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   return (
     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group hover:border-orange-200">
       <div className="p-6">
-        {/* Badges bar */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
             <Tag className="w-3 h-3" />
@@ -29,7 +28,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           <span className="text-xs text-slate-400 font-mono">#{recipe.id}</span>
         </div>
 
-        {/* Title & Description */}
         <h3
           onClick={() => onView(recipe)}
           className="text-lg font-bold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-1 mb-2 cursor-pointer"
@@ -40,7 +38,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           {recipe.description}
         </p>
 
-        {/* Author info */}
         <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-100">
           <div className="w-7 h-7 rounded-full bg-orange-100/70 text-orange-700 flex items-center justify-center text-xs font-bold">
             <ChefHat className="w-4 h-4" />
@@ -50,9 +47,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           </span>
         </div>
 
-        {/* Ingredients & Steps preview */}
         <div className="space-y-3 mb-2">
-          {/* Ingredients list */}
           <div>
             <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
               <span className="flex items-center gap-1 font-medium text-emerald-700">
@@ -82,7 +77,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             </div>
           </div>
 
-          {/* Steps summary */}
           <div className="flex items-center justify-between text-xs pt-1">
             <span className="flex items-center gap-1 font-medium text-blue-700">
               <ListOrdered className="w-3.5 h-3.5" />
@@ -95,7 +89,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
         </div>
       </div>
 
-      {/* Card Actions */}
       <div className="px-6 py-3.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-2">
         <button
           onClick={() => onView(recipe)}

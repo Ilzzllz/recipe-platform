@@ -77,7 +77,7 @@ class RecipeViewCounterServiceTest {
     void handleInterruptionShouldRestoreFlag() {
         Thread.interrupted();
 
-        counterService.handleInterruption(new InterruptedException("test"));
+        counterService.handleInterruption();
 
         assertThat(Thread.currentThread().isInterrupted()).isTrue();
 

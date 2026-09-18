@@ -181,7 +181,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
-        {/* Header */}
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <h2 className="text-xl font-bold text-slate-900">
@@ -199,7 +198,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           </button>
         </div>
 
-        {/* Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
           {globalError && (
             <div className="p-3.5 bg-red-50 text-red-700 border border-red-200 rounded-2xl text-xs font-medium flex items-center gap-2.5">
@@ -208,7 +206,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             </div>
           )}
 
-          {/* Title & Description */}
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
@@ -257,7 +254,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             </div>
           </div>
 
-          {/* Author & Category Pickers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
@@ -320,7 +316,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             </div>
           </div>
 
-          {/* ManyToMany: Ingredients Selection */}
           <div
             className={`rounded-2xl border-2 p-4 transition-colors ${
               fieldErrors.ingredientIds
@@ -368,7 +363,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             )}
           </div>
 
-          {/* OneToMany: Steps List */}
           <div
             className={`rounded-2xl border-2 p-4 space-y-3 transition-colors ${
               fieldErrors.steps ? 'border-red-300 bg-red-50/20' : 'border-blue-100 bg-blue-50/20'
@@ -411,7 +405,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                     className="flex-1 text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
 
-                  {/* Move Up/Down */}
                   <div className="flex items-center">
                     <button
                       type="button"
@@ -433,7 +426,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                     </button>
                   </div>
 
-                  {/* Delete Step */}
                   <button
                     type="button"
                     disabled={steps.length === 1}
@@ -451,7 +443,6 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             )}
           </div>
 
-          {/* Footer Submit */}
           <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
             <button
               type="button"

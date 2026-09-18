@@ -123,7 +123,8 @@ class GlobalExceptionHandlerTest {
         }
 
         @PostMapping("/test/valid-body")
-        public void validateBody(@Valid @RequestBody TestRequestBody body) {
+        public String validateBody(@Valid @RequestBody TestRequestBody body) {
+            return body.getName();
         }
 
         @GetMapping("/test/illegal-argument")
@@ -132,7 +133,8 @@ class GlobalExceptionHandlerTest {
         }
 
         @GetMapping("/test/param")
-        public void requireParam(@RequestParam String requiredParam) {
+        public String requireParam(@RequestParam String requiredParam) {
+            return requiredParam;
         }
 
         @GetMapping("/test/data-integrity")

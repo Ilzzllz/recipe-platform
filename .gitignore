@@ -6,7 +6,6 @@ ${project.build.directory}/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
 .apt_generated
 .classpath
 .factorypath
@@ -15,13 +14,11 @@ ${project.build.directory}/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -31,14 +28,11 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
 .vscode/
 
-### Node & Frontend ###
 **/node_modules/
 frontend/dist/
 *.tsbuildinfo
 
-### Application Logs ###
 logs/
 *.log

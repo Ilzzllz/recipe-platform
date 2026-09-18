@@ -209,7 +209,7 @@ class RecipeServiceUnitTest {
         when(recipeMapper.toEntity(request)).thenReturn(recipe);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(2L)).thenReturn(Optional.of(category));
-        when(ingredientRepository.findAllById(Set.of(3L))).thenReturn(List.of()); // 0 ingredients found vs 1 requested
+        when(ingredientRepository.findAllById(Set.of(3L))).thenReturn(List.of());
 
         assertThatThrownBy(() -> recipeService.create(request))
                 .isInstanceOf(NotFoundException.class)

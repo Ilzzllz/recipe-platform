@@ -34,7 +34,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
-        {/* Header */}
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -53,9 +52,7 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
           </button>
         </div>
 
-        {/* Modal Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* Author & Description */}
           <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/70">
             <div className="flex items-center gap-2 mb-2 text-sm text-slate-700">
               <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
@@ -67,7 +64,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
             <p className="text-sm text-slate-600 leading-relaxed">{recipe.description}</p>
           </div>
 
-          {/* Ingredients List */}
           <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/30 p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -101,7 +97,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
             </div>
           </div>
 
-          {/* Step-by-step Cooking Guide with interactive checkboxes */}
           <div className="rounded-2xl border border-blue-200/80 bg-blue-50/30 p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -170,7 +165,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
             </div>
           </div>
 
-          {/* Nutrition Calculation Section */}
           <div className="rounded-2xl border border-purple-200/80 bg-purple-50/40 p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
               <div className="flex items-center gap-2">
@@ -206,7 +200,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
               </button>
             </div>
 
-            {/* Task Status & Results */}
             {nutritionTask && (
               <div className="mt-4 pt-4 border-t border-purple-200/60">
                 {nutritionTask.status === 'IN_PROGRESS' && (
@@ -224,7 +217,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
 
                   return (
                     <div className="space-y-4">
-                      {/* Summary Badges */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                         <div className="bg-white p-3 rounded-2xl border border-purple-200 text-center shadow-xs">
                           <span className="block text-[11px] text-slate-500 font-medium">Калории</span>
@@ -252,7 +244,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Breakdown by ingredients */}
                       <div className="bg-white rounded-2xl border border-purple-100 p-3.5 overflow-x-auto shadow-xs">
                         <table className="w-full text-left text-xs">
                           <thead>
@@ -304,7 +295,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                         </table>
                       </div>
 
-                      {/* Explanation Note for Data Sources */}
                       <div className="p-3 bg-white rounded-xl border border-purple-100 text-xs text-slate-600 leading-relaxed space-y-1">
                         <span className="font-bold text-slate-800 text-[11px] block">
                           Что означают источники данных?
@@ -330,7 +320,6 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
           <button
             onClick={() => {

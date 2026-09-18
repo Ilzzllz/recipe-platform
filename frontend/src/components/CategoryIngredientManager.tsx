@@ -27,7 +27,6 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Confirm delete modal state
   const [deleteTarget, setDeleteTarget] = useState<{
     type: 'category' | 'ingredient';
     id: number;
@@ -132,7 +131,6 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Categories Manager */}
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between gap-2 mb-4">
@@ -199,7 +197,6 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
           </div>
         </div>
 
-        {/* Ingredients Manager */}
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between gap-2 mb-4">
@@ -254,7 +251,6 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
           </div>
         </div>
 
-        {/* Users / Authors Manager */}
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between gap-2 mb-4">
@@ -312,7 +308,6 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
         </div>
       </div>
 
-      {/* Modern Confirm Delete Modal */}
       <ConfirmModal
         isOpen={!!deleteTarget}
         title={`Удалить ${deleteTarget?.type === 'category' ? 'категорию' : 'ингредиент'}?`}

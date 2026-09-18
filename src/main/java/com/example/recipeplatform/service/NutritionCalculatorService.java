@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClient;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,10 @@ public class NutritionCalculatorService {
                     .orElseThrow(() -> new NotFoundException("Recipe with id " + recipeId + " was not found"));
 
             List<IngredientNutritionDto> ingredientNutritions = new ArrayList<>();
-            double totalCalories = 0.0, totalProteins = 0.0, totalFats = 0.0, totalCarbs = 0.0;
+            double totalCalories = 0.0;
+            double totalProteins = 0.0;
+            double totalFats = 0.0;
+            double totalCarbs = 0.0;
 
             for (Ingredient ingredient : recipe.getIngredients()) {
                 IngredientNutritionDto nut = fetchIngredientNutrition(ingredient.getName());
@@ -75,11 +79,11 @@ public class NutritionCalculatorService {
             report.setTotalFatsGrams(Math.round(totalFats * 10.0) / 10.0);
             report.setTotalCarbohydratesGrams(Math.round(totalCarbs * 10.0) / 10.0);
             report.setIngredients(ingredientNutritions);
-            report.setCalculatedAt(LocalDateTime.now());
+            report.setCalculatedAt(LocalDateTime.now(Clock.systemDefaultZone()));
 
             if (task != null) {
                 task.setStatus(AsyncTaskStatus.COMPLETED);
-                task.setCompletedAt(LocalDateTime.now());
+                task.setCompletedAt(LocalDateTime.now(Clock.systemDefaultZone()));
                 task.setMessage("Nutritional report calculated successfully.");
                 task.setResult(report);
             }
@@ -88,7 +92,7 @@ public class NutritionCalculatorService {
             logger.error("Failed to compute nutrition report for task {}: {}", taskId, e.getMessage());
             if (task != null) {
                 task.setStatus(AsyncTaskStatus.FAILED);
-                task.setCompletedAt(LocalDateTime.now());
+                task.setCompletedAt(LocalDateTime.now(Clock.systemDefaultZone()));
                 task.setMessage("Failed to compute nutrition report: " + e.getMessage());
             }
             CompletableFuture<NutritionReportDto> failed = new CompletableFuture<>();

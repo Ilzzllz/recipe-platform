@@ -201,7 +201,6 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 antialiased selection:bg-orange-100 selection:text-orange-900">
-      {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -213,11 +212,9 @@ export const App: React.FC = () => {
         isLoading={isLoading}
       />
 
-      {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'recipes' && (
           <div className="space-y-6">
-            {/* Metric counters summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex items-center gap-3">
                 <div className="p-2.5 bg-orange-50 text-orange-600 rounded-2xl">
@@ -260,7 +257,6 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Actions Bar: Search, Category Filter, Create Button */}
             <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2">
                 <div className="relative flex-1">
@@ -321,7 +317,6 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Recipes Grid */}
             {isLoading && recipes.length === 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -365,7 +360,6 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 2: Dictionaries Management */}
         {activeTab === 'data' && (
           <CategoryIngredientManager
             categories={categories}
@@ -377,7 +371,6 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Dedicated Nutrition Modal for Direct Card Action */}
       <NutritionModal
         recipe={nutritionRecipe}
         isOpen={!!nutritionRecipe}
@@ -387,7 +380,6 @@ export const App: React.FC = () => {
         isPolling={isPollingNutrition}
       />
 
-      {/* Recipe Details Modal */}
       <RecipeModal
         recipe={viewingRecipe}
         onClose={() => setViewingRecipe(null)}
@@ -400,7 +392,6 @@ export const App: React.FC = () => {
         isPollingNutrition={isPollingNutrition}
       />
 
-      {/* Create / Edit Form Modal */}
       <RecipeFormModal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
@@ -411,7 +402,6 @@ export const App: React.FC = () => {
         users={users}
       />
 
-      {/* Modern Confirm Recipe Deletion Modal */}
       <ConfirmModal
         isOpen={!!recipeToDelete}
         title="Удалить рецепт?"
@@ -423,7 +413,6 @@ export const App: React.FC = () => {
         onCancel={() => setRecipeToDelete(null)}
       />
 
-      {/* Floating Modern Toast Alerts */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>
   );

@@ -122,7 +122,7 @@ public class RecipeViewCounterService {
             latch.await();
             return true;
         } catch (InterruptedException e) {
-            handleInterruption(e);
+            handleInterruption();
             return false;
         }
     }
@@ -131,12 +131,12 @@ public class RecipeViewCounterService {
         try {
             return latch.await(timeout, unit);
         } catch (InterruptedException e) {
-            handleInterruption(e);
+            handleInterruption();
             return false;
         }
     }
 
-    void handleInterruption(InterruptedException e) {
+    void handleInterruption() {
         Thread.currentThread().interrupt();
     }
 }

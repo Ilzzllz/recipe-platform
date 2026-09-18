@@ -215,7 +215,6 @@ class UserServiceTest {
     void deleteShouldRemoveUserWithoutRecipes() {
         User user = new User();
         user.setId(1L);
-        // user.getRecipes() is empty by default
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 

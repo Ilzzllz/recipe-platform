@@ -6,6 +6,7 @@ import com.example.recipeplatform.exception.NotFoundException;
 import com.example.recipeplatform.repository.RecipeRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -33,7 +34,7 @@ public class NutritionReportService {
         AsyncTaskResponseDto task = new AsyncTaskResponseDto();
         task.setTaskId(taskId);
         task.setStatus(AsyncTaskStatus.IN_PROGRESS);
-        task.setStartedAt(LocalDateTime.now());
+        task.setStartedAt(LocalDateTime.now(Clock.systemDefaultZone()));
         task.setMessage("Fetching nutrition data from Open Food Facts API for "
                 + recipe.getIngredients().size() + " ingredients...");
         taskStore.put(taskId, task);

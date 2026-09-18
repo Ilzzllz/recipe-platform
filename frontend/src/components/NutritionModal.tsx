@@ -32,7 +32,6 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
-        {/* Header */}
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-purple-50 to-orange-50/40">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-purple-600 text-white rounded-2xl shadow-sm">
@@ -51,9 +50,7 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* Loading State */}
           {inProgress && (
             <div className="py-12 px-4 text-center space-y-4">
               <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
@@ -68,7 +65,6 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
             </div>
           )}
 
-          {/* Failed State */}
           {isFailed && !inProgress && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-xs flex items-start gap-3">
               <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500 mt-0.5" />
@@ -85,10 +81,8 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
             </div>
           )}
 
-          {/* Completed State */}
           {isCompleted && !inProgress && report && (
             <div className="space-y-6">
-              {/* 4 Summary Metric Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-2xl border border-orange-200 text-center shadow-xs">
                   <span className="block text-xs font-semibold text-orange-700 uppercase tracking-wider mb-1">
@@ -123,7 +117,6 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
                 </div>
               </div>
 
-              {/* Detailed Breakdown per Ingredient */}
               <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-4">
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
                   Детализация по ингредиентам блюда
@@ -181,7 +174,6 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
                   </table>
                 </div>
 
-                {/* Explanation Note for Data Sources */}
                 <div className="mt-4 p-3.5 bg-white rounded-xl border border-slate-200/80 text-xs text-slate-600 leading-relaxed space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-slate-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
@@ -199,7 +191,6 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <button
             onClick={() => onRecalculate(recipe)}

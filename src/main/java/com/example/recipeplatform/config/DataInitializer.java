@@ -72,7 +72,7 @@ public class DataInitializer {
     private static final String INGREDIENT_TUNA = "tuna";
     private static final String INGREDIENT_ZUCCHINI = "zucchini";
     private static final String INGREDIENT_PEPPER = "pepper";
-    private static final String INGREDIENT_LEMON = "lemon";   // <-- добавлено
+    private static final String INGREDIENT_LEMON = "lemon";
 
     @Bean
     @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
