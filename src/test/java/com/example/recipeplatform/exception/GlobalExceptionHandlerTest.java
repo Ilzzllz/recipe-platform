@@ -71,6 +71,16 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("Should return 409 on ConflictException")
+    void handleConflictException() throws Exception {
+        mockMvc.perform(get("/test/conflict"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(jsonPath("$.message").value("Email already exists"));
+    }
+
+    @Test
     @DisplayName("Should return 400 when required request parameter is missing")
     void handleMissingRequestParam() throws Exception {
         mockMvc.perform(get("/test/param"))
@@ -130,6 +140,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/test/illegal-argument")
         public void throwIllegalArgument() {
             throw new IllegalArgumentException("Invalid argument supplied");
+        }
+
+        @GetMapping("/test/conflict")
+        public void throwConflict() {
+            throw new ConflictException("Email already exists");
         }
 
         @GetMapping("/test/param")

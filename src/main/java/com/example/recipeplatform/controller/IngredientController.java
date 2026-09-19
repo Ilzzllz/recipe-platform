@@ -29,11 +29,11 @@ import java.util.List;
 @RequestMapping("/api/ingredients")
 @Tag(name = "Ingredients", description = "CRUD operations for ingredients")
 @ApiResponses(value = {
-        @ApiResponse(responseCode = "400", description = "Validation error or duplicate ingredient name",
+        @ApiResponse(responseCode = "400", description = "Validation error",
                 content = @Content(schema = @Schema(implementation = ApiError.class))),
         @ApiResponse(responseCode = "404", description = "Ingredient was not found",
                 content = @Content(schema = @Schema(implementation = ApiError.class))),
-        @ApiResponse(responseCode = "409", description = "Database constraint conflict",
+        @ApiResponse(responseCode = "409", description = "Duplicate ingredient name or database constraint conflict",
                 content = @Content(schema = @Schema(implementation = ApiError.class)))
 })
 public class IngredientController {

@@ -29,11 +29,11 @@ import java.util.List;
 @RequestMapping("/api/users")
 @Tag(name = "Users", description = "CRUD operations for users")
 @ApiResponses(value = {
-        @ApiResponse(responseCode = "400", description = "Validation error or duplicate username/email",
+        @ApiResponse(responseCode = "400", description = "Validation error",
                 content = @Content(schema = @Schema(implementation = ApiError.class))),
         @ApiResponse(responseCode = "404", description = "User was not found",
                 content = @Content(schema = @Schema(implementation = ApiError.class))),
-        @ApiResponse(responseCode = "409", description = "Database constraint conflict",
+        @ApiResponse(responseCode = "409", description = "Duplicate username/email or database constraint conflict",
                 content = @Content(schema = @Schema(implementation = ApiError.class)))
 })
 public class UserController {

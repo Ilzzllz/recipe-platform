@@ -4,6 +4,7 @@ import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.CategoryCreateDto;
 import com.example.recipeplatform.dto.CategoryDto;
 import com.example.recipeplatform.exception.NotFoundException;
+import com.example.recipeplatform.exception.ConflictException;
 import com.example.recipeplatform.mapper.CategoryMapper;
 import com.example.recipeplatform.model.Category;
 import com.example.recipeplatform.repository.CategoryRepository;
@@ -47,7 +48,7 @@ public class CategoryService {
     @Transactional
     public CategoryDto create(CategoryCreateDto dto) {
         if (categoryRepository.existsByNameIgnoreCase(dto.getName())) {
-            throw new IllegalArgumentException(CATEGORY_ALREADY_EXISTS);
+            throw new ConflictException(CATEGORY_ALREADY_EXISTS);
         }
         CategoryDto result = categoryMapper.toDto(categoryRepository.save(categoryMapper.toEntity(dto)));
         recipeQueryCacheService.invalidateAll();
@@ -60,7 +61,7 @@ public class CategoryService {
         categoryRepository.findByNameIgnoreCase(dto.getName())
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> {
-                    throw new IllegalArgumentException(CATEGORY_ALREADY_EXISTS);
+                    throw new ConflictException(CATEGORY_ALREADY_EXISTS);
                 });
         categoryMapper.updateEntity(category, dto);
         CategoryDto result = categoryMapper.toDto(categoryRepository.save(category));

@@ -4,6 +4,7 @@ import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.IngredientCreateDto;
 import com.example.recipeplatform.dto.IngredientDto;
 import com.example.recipeplatform.exception.NotFoundException;
+import com.example.recipeplatform.exception.ConflictException;
 import com.example.recipeplatform.mapper.IngredientMapper;
 import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
@@ -49,7 +50,7 @@ public class IngredientService {
     @Transactional
     public IngredientDto create(IngredientCreateDto dto) {
         if (ingredientRepository.existsByNameIgnoreCase(dto.getName())) {
-            throw new IllegalArgumentException(INGREDIENT_ALREADY_EXISTS);
+            throw new ConflictException(INGREDIENT_ALREADY_EXISTS);
         }
         IngredientDto result = ingredientMapper.toDto(ingredientRepository.save(ingredientMapper.toEntity(dto)));
         recipeQueryCacheService.invalidateAll();
@@ -62,7 +63,7 @@ public class IngredientService {
         ingredientRepository.findByNameIgnoreCase(dto.getName())
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> {
-                    throw new IllegalArgumentException(INGREDIENT_ALREADY_EXISTS);
+                    throw new ConflictException(INGREDIENT_ALREADY_EXISTS);
                 });
         ingredientMapper.updateEntity(ingredient, dto);
         IngredientDto result = ingredientMapper.toDto(ingredientRepository.save(ingredient));

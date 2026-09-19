@@ -257,6 +257,34 @@ class RecipePlatformApplicationTests {
     }
 
     @Test
+    void duplicateUserEmailShouldReturnConflict() throws Exception {
+        String suffix = UUID.randomUUID().toString();
+        User existingUser = new User();
+        existingUser.setUsername("conflict_existing_" + suffix);
+        existingUser.setEmail("conflict_" + suffix + "@example.com");
+        userRepository.saveAndFlush(existingUser);
+
+        try {
+            mockMvc.perform(post("/api/users")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "username": "conflict_new_%s",
+                                      "email": "%s",
+                                      "bio": "Demonstration of a conflict"
+                                    }
+                                    """.formatted(suffix, existingUser.getEmail())))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.status").value(409))
+                    .andExpect(jsonPath("$.error").value("Conflict"))
+                    .andExpect(jsonPath("$.message").value("Email already exists"))
+                    .andExpect(jsonPath("$.path").value("/api/users"));
+        } finally {
+            userRepository.deleteById(existingUser.getId());
+        }
+    }
+
+    @Test
     void openApiSpecShouldBeAvailable() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())

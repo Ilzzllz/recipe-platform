@@ -4,6 +4,7 @@ import com.example.recipeplatform.cache.RecipeQueryCacheService;
 import com.example.recipeplatform.dto.UserCreateDto;
 import com.example.recipeplatform.dto.UserDto;
 import com.example.recipeplatform.exception.NotFoundException;
+import com.example.recipeplatform.exception.ConflictException;
 import com.example.recipeplatform.mapper.UserMapper;
 import com.example.recipeplatform.model.User;
 import com.example.recipeplatform.repository.UserRepository;
@@ -47,10 +48,10 @@ public class UserService {
     @Transactional
     public UserDto create(UserCreateDto dto) {
         if (userRepository.existsByUsernameIgnoreCase(dto.getUsername())) {
-            throw new IllegalArgumentException(USERNAME_ALREADY_EXISTS);
+            throw new ConflictException(USERNAME_ALREADY_EXISTS);
         }
         if (userRepository.existsByEmailIgnoreCase(dto.getEmail())) {
-            throw new IllegalArgumentException(EMAIL_ALREADY_EXISTS);
+            throw new ConflictException(EMAIL_ALREADY_EXISTS);
         }
         UserDto result = userMapper.toDto(userRepository.save(userMapper.toEntity(dto)));
         recipeQueryCacheService.invalidateAll();
@@ -86,12 +87,12 @@ public class UserService {
         userRepository.findByUsernameIgnoreCase(dto.getUsername())
                 .filter(existing -> !existing.getId().equals(currentId))
                 .ifPresent(existing -> {
-                    throw new IllegalArgumentException(USERNAME_ALREADY_EXISTS);
+                    throw new ConflictException(USERNAME_ALREADY_EXISTS);
                 });
         userRepository.findByEmailIgnoreCase(dto.getEmail())
                 .filter(existing -> !existing.getId().equals(currentId))
                 .ifPresent(existing -> {
-                    throw new IllegalArgumentException(EMAIL_ALREADY_EXISTS);
+                    throw new ConflictException(EMAIL_ALREADY_EXISTS);
                 });
     }
 }
