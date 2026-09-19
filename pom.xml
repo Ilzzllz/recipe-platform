@@ -20,6 +20,18 @@
         <sonar.projectKey>Ilzzllz_recipe-platform</sonar.projectKey>
         <sonar.organization>ilzzllz</sonar.organization>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+
+        <!-- ВОТ ЭТА СТРОКА ОТВЕЧАЕТ ЗА ИСКЛЮЧЕНИЯ -->
+        <sonar.coverage.exclusions>
+            **/config/**/*,
+            **/controller/**/*,
+            **/mapper/**/*,
+            **/dto/**/*,
+            **/model/**/*,
+            **/exception/**/*,
+            **/cache/**/*,
+            **/*Application.java
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>

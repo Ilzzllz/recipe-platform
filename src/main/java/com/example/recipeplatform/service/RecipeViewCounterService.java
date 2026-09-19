@@ -73,7 +73,7 @@ public class RecipeViewCounterService {
         LocalDemoCounters demo = new LocalDemoCounters();
         long startTime = System.currentTimeMillis();
 
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        ExecutorService executor = createExecutor(threadCount);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch finishLatch = new CountDownLatch(threadCount);
 
@@ -125,6 +125,10 @@ public class RecipeViewCounterService {
             handleInterruption();
             return false;
         }
+    }
+
+    ExecutorService createExecutor(int threadCount) {
+        return Executors.newFixedThreadPool(threadCount);
     }
 
     boolean awaitWithTimeout(CountDownLatch latch, long timeout, TimeUnit unit) {

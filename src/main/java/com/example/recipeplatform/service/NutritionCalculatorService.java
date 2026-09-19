@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 import java.net.URLEncoder;
@@ -109,7 +110,7 @@ public class NutritionCalculatorService {
                     .retrieve()
                     .body(String.class);
 
-            if (rawJson != null && !rawJson.isBlank()) {
+            if (StringUtils.hasText(rawJson)) {
                 JsonNode root = objectMapper.readTree(rawJson);
                 JsonNode products = root.path("products");
                 if (products.isArray() && !products.isEmpty()) {

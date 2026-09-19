@@ -412,6 +412,22 @@ class RecipeServiceUnitTest {
     }
 
     @Test
+    @DisplayName("createBulkWithoutTransaction should save every valid recipe and invalidate query cache")
+    void createBulkWithoutTransactionShouldSaveEveryValidRecipe() {
+        stubReferences();
+        when(recipeRepository.saveAndFlush(any(Recipe.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(recipeMapper.toDto(any(Recipe.class))).thenReturn(new RecipeDto());
+
+        List<RecipeDto> result = recipeService.createBulkWithoutTransaction(
+                List.of(validRecipeRequest("First soup"), validRecipeRequest("Second soup")));
+
+        verify(recipeRepository, times(2)).saveAndFlush(any(Recipe.class));
+        verify(recipeQueryCacheService).invalidateAll();
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
     @DisplayName("createBulk should stop before saving when author is not found")
     void createBulkShouldStopBeforeSavingWhenOptionalAuthorIsEmpty() {
         RecipeCreateDto request = validRecipeRequest("No author soup");

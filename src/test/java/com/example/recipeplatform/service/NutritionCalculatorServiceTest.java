@@ -119,6 +119,51 @@ class NutritionCalculatorServiceTest {
     }
 
     @Test
+    @DisplayName("calculateNutritionAsync should use a fallback for blank and empty API responses")
+    void calculateNutritionAsyncShouldFallbackForBlankAndEmptyApiResponses() throws Exception {
+        mockServer.expect(requestTo(containsString("search.pl")))
+                .andRespond(withSuccess("", MediaType.APPLICATION_JSON));
+
+        Recipe recipe = sampleRecipe(5L, "Blank response soup");
+        when(recipeRepository.findByIdWithFetchJoin(5L)).thenReturn(Optional.of(recipe));
+
+        NutritionReportDto report = calculatorService.calculateNutritionAsync(5L, UUID.randomUUID()).get();
+
+        assertThat(report.getIngredients().getFirst().getDataSource()).isEqualTo("Standard culinary estimate");
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("calculateNutritionAsync should use a fallback when products are empty")
+    void calculateNutritionAsyncShouldFallbackForEmptyProducts() throws Exception {
+        mockServer.expect(requestTo(containsString("search.pl")))
+                .andRespond(withSuccess("{\"products\": []}", MediaType.APPLICATION_JSON));
+
+        Recipe recipe = sampleRecipe(6L, "Empty products soup");
+        when(recipeRepository.findByIdWithFetchJoin(6L)).thenReturn(Optional.of(recipe));
+
+        NutritionReportDto report = calculatorService.calculateNutritionAsync(6L, UUID.randomUUID()).get();
+
+        assertThat(report.getIngredients().getFirst().getDataSource()).isEqualTo("Standard culinary estimate");
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("calculateNutritionAsync should use a fallback when products are not an array")
+    void calculateNutritionAsyncShouldFallbackForNonArrayProducts() throws Exception {
+        mockServer.expect(requestTo(containsString("search.pl")))
+                .andRespond(withSuccess("{\"products\": {}}", MediaType.APPLICATION_JSON));
+
+        Recipe recipe = sampleRecipe(7L, "Invalid products soup");
+        when(recipeRepository.findByIdWithFetchJoin(7L)).thenReturn(Optional.of(recipe));
+
+        NutritionReportDto report = calculatorService.calculateNutritionAsync(7L, UUID.randomUUID()).get();
+
+        assertThat(report.getIngredients().getFirst().getDataSource()).isEqualTo("Standard culinary estimate");
+        mockServer.verify();
+    }
+
+    @Test
     @DisplayName("calculateNutritionAsync should mark task FAILED when unexpected error occurs")
     void calculateNutritionAsyncShouldHandleFailure() {
         when(recipeRepository.findByIdWithFetchJoin(3L)).thenThrow(new RuntimeException("Database error"));
@@ -134,6 +179,16 @@ class NutritionCalculatorServiceTest {
         assertThat(future).isCompletedExceptionally();
         assertThat(task.getStatus()).isEqualTo(AsyncTaskStatus.FAILED);
         assertThat(task.getMessage()).contains("Database error");
+    }
+
+    @Test
+    @DisplayName("calculateNutritionAsync should fail without a task entry when a recipe is absent")
+    void calculateNutritionAsyncShouldHandleFailureWithoutTask() {
+        when(recipeRepository.findByIdWithFetchJoin(8L)).thenReturn(Optional.empty());
+
+        CompletableFuture<NutritionReportDto> future = calculatorService.calculateNutritionAsync(8L, UUID.randomUUID());
+
+        assertThat(future).isCompletedExceptionally();
     }
 
     private Recipe sampleRecipe(Long id, String title) {

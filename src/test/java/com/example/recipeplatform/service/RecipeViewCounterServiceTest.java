@@ -6,7 +6,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +55,17 @@ class RecipeViewCounterServiceTest {
         assertThat(stats.getSynchronizedCounter()).isZero();
         assertThat(stats.getUnsafeCounter()).isZero();
         assertThat(stats.getLostUpdates()).isZero();
+    }
+
+    @Test
+    @DisplayName("getStats should report a race condition when unsafe increments are lost")
+    void getStatsShouldReportRaceConditionWhenUnsafeCounterLags() {
+        counterService.incrementAtomic();
+
+        CounterStatsDto stats = counterService.getStats();
+
+        assertThat(stats.getLostUpdates()).isOne();
+        assertThat(stats.isRaceConditionObserved()).isTrue();
     }
 
     @Test
@@ -108,5 +122,62 @@ class RecipeViewCounterServiceTest {
         assertThat(result).isFalse();
         assertThat(Thread.currentThread().isInterrupted()).isTrue();
         Thread.interrupted();
+    }
+
+    @Test
+    @DisplayName("demonstrateRaceCondition should skip increments when a worker is interrupted before start")
+    void demonstrateRaceConditionShouldHandleInterruptedWorker() {
+        RecipeViewCounterService interruptedService = new RecipeViewCounterService() {
+            @Override
+            ExecutorService createExecutor(int threadCount) {
+                return new InterruptingExecutorService();
+            }
+        };
+
+        RaceConditionDemoResultDto result = interruptedService.demonstrateRaceCondition(1, 10);
+
+        assertThat(result.getAtomicCounterResult()).isZero();
+        assertThat(result.getSynchronizedCounterResult()).isZero();
+        assertThat(result.getUnsafeCounterResult()).isZero();
+        assertThat(result.getLostUpdates()).isEqualTo(10);
+    }
+
+    private static final class InterruptingExecutorService extends AbstractExecutorService {
+        private boolean shutdown;
+
+        @Override
+        public void shutdown() {
+            shutdown = true;
+        }
+
+        @Override
+        public java.util.List<Runnable> shutdownNow() {
+            shutdown = true;
+            return Collections.emptyList();
+        }
+
+        @Override
+        public boolean isShutdown() {
+            return shutdown;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return shutdown;
+        }
+
+        @Override
+        public boolean awaitTermination(long timeout, TimeUnit unit) {
+            return shutdown;
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            Thread worker = new Thread(() -> {
+                Thread.currentThread().interrupt();
+                command.run();
+            });
+            worker.start();
+        }
     }
 }
