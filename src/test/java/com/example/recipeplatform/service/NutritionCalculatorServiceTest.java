@@ -48,7 +48,7 @@ class NutritionCalculatorServiceTest {
         mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
         RestClient restClient = restClientBuilder.build();
         calculatorService = new NutritionCalculatorService(
-                recipeRepository, new ObjectMapper(), taskStore, restClient);
+                recipeRepository, new ObjectMapper(), taskStore, restClient, 0);
     }
 
     @Test

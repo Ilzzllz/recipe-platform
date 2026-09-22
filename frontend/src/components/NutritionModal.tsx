@@ -59,7 +59,7 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
               <div>
                 <h3 className="text-base font-bold text-slate-900">Идет расчет нутриентов...</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                  Асинхронный фоновый поток выполняет запросы к базе данных Open Food Facts API для сопоставления калорийности каждого ингредиента.
+                  Фоновый расчет сопоставляет каждый ингредиент с открытой базой продуктов.
                 </p>
               </div>
             </div>
@@ -164,7 +164,7 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
                                     isOpenFoodFacts ? 'bg-emerald-600' : 'bg-amber-500'
                                   }`}
                                 />
-                                {isOpenFoodFacts ? 'Open Food Facts' : 'Кулинарная оценка'}
+                                {isOpenFoodFacts ? 'Открытая база' : 'Кулинарная оценка'}
                               </span>
                             </td>
                           </tr>
@@ -180,10 +180,10 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
                     <span>Что означают источники данных?</span>
                   </div>
                   <p className="text-[11px]">
-                    <strong className="text-emerald-700">Open Food Facts</strong> — точные данные найдены и загружены из открытой мировой базы продуктов.
+                    <strong className="text-emerald-700">Открытая база продуктов</strong> — точные данные найдены и загружены из мировой базы продуктов.
                   </p>
                   <p className="text-[11px]">
-                    <strong className="text-amber-700">Кулинарная оценка (Fallback)</strong> — стандартный базовый расчет пищевой ценности. Используется автоматически, если ингредиент написан с опечаткой или отсутствует в мировой базе. Благодаря этому расчет не падает с ошибкой, а сервер работает отказоустойчиво.
+                    <strong className="text-amber-700">Кулинарная оценка</strong> — базовый расчет пищевой ценности, если продукт не найден в базе.
                   </p>
                 </div>
               </div>

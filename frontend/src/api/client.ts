@@ -29,6 +29,15 @@ export class ApiError extends Error {
   }
 }
 
+// Technical identifiers are useful in logs but should never leak into the
+// Russian interface. Keep server diagnostics intact in the network tab while
+// presenting a neutral message to the user.
+function hideTechnicalIds(message: string): string {
+  return message
+    .replace(/\b(?:recipe|category|ingredient|user)\s+with\s+id\s+\d+\s+was\s+not\s+found\b/gi, 'Выбранный объект не найден')
+    .replace(/\b(?:id|ид)\s*[#№:]?\s*\d+\b/gi, 'указанный объект');
+}
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const headers = new Headers(options?.headers || {});
@@ -48,7 +57,8 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const errorMsg = data?.message || `Ошибка сервера: HTTP ${response.status}`;
+    const rawError = typeof data?.message === 'string' ? data.message : `Ошибка сервера: HTTP ${response.status}`;
+    const errorMsg = hideTechnicalIds(rawError);
     const fieldErrors = data?.details?.fieldErrors || data?.details?.violations || data?.fieldErrors;
     throw new ApiError(response.status, errorMsg, fieldErrors);
   }

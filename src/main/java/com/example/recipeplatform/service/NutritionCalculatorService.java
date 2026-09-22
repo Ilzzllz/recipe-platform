@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -39,20 +40,24 @@ public class NutritionCalculatorService {
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final Map<UUID, AsyncTaskResponseDto> taskStore;
+    private final long initialDelayMs;
 
     public NutritionCalculatorService(RecipeRepository recipeRepository,
                                       ObjectMapper objectMapper,
                                       Map<UUID, AsyncTaskResponseDto> taskStore,
-                                      RestClient restClient) {
+                                      RestClient restClient,
+                                      @Value("${app.async.nutrition-initial-delay-ms:10000}") long initialDelayMs) {
         this.recipeRepository = recipeRepository;
         this.objectMapper = objectMapper;
         this.taskStore = taskStore;
         this.restClient = restClient;
+        this.initialDelayMs = initialDelayMs;
     }
 
     @Async("recipeTaskExecutor")
     public CompletableFuture<NutritionReportDto> calculateNutritionAsync(Long recipeId, UUID taskId) {
         AsyncTaskResponseDto task = taskStore.get(taskId);
+        long calculationStartedAt = System.nanoTime();
         try {
             Recipe recipe = recipeRepository.findByIdWithFetchJoin(recipeId)
                     .orElseThrow(() -> new NotFoundException("Recipe with id " + recipeId + " was not found"));
@@ -83,10 +88,11 @@ public class NutritionCalculatorService {
             report.setCalculatedAt(LocalDateTime.now(Clock.systemDefaultZone()));
 
             if (task != null) {
-                task.setStatus(AsyncTaskStatus.COMPLETED);
+                waitUntilMinimumProgressTimeHasElapsed(calculationStartedAt);
                 task.setCompletedAt(LocalDateTime.now(Clock.systemDefaultZone()));
                 task.setMessage("Nutritional report calculated successfully.");
                 task.setResult(report);
+                task.setStatus(AsyncTaskStatus.COMPLETED);
             }
             return CompletableFuture.completedFuture(report);
         } catch (Exception e) {
@@ -99,6 +105,14 @@ public class NutritionCalculatorService {
             CompletableFuture<NutritionReportDto> failed = new CompletableFuture<>();
             failed.completeExceptionally(e);
             return failed;
+        }
+    }
+
+    private void waitUntilMinimumProgressTimeHasElapsed(long calculationStartedAt) throws InterruptedException {
+        long elapsedMs = (System.nanoTime() - calculationStartedAt) / 1_000_000;
+        long remainingMs = initialDelayMs - elapsedMs;
+        if (remainingMs > 0) {
+            Thread.sleep(remainingMs);
         }
     }
 

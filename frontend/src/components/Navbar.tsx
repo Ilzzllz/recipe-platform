@@ -29,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div>
               <span className="text-xl font-black tracking-tight bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                RecipePlatform
+                Кулинарная книга
               </span>
               <p className="hidden sm:block text-[11px] text-slate-400 font-medium">
                 Кулинарная книга рецептов & КБЖУ

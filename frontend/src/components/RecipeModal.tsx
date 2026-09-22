@@ -40,7 +40,7 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800">
                 {recipe.category?.name || 'Без категории'}
               </span>
-              <span className="text-xs text-slate-400 font-mono">#{recipe.id}</span>
+              <span className="text-xs text-slate-400">Подробный рецепт</span>
             </div>
             <h2 className="text-2xl font-black text-slate-900">{recipe.title}</h2>
           </div>
@@ -176,7 +176,7 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                     Пищевая ценность и калорийность (КБЖУ)
                   </h4>
                   <p className="text-xs text-purple-700">
-                    Асинхронный расчет нутриентов через Open Food Facts
+                    Асинхронный расчет нутриентов по открытой базе продуктов
                   </p>
                 </div>
               </div>
@@ -271,7 +271,7 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                                       }`}
                                       title={
                                         isOpenFoodFacts
-                                          ? 'Найдено в Open Food Facts'
+                                          ? 'Найдено в открытой базе продуктов'
                                           : 'Кулинарная оценка'
                                       }
                                     />
@@ -286,7 +286,7 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                                   <td className="py-2.5 text-right">{itemFats} г</td>
                                   <td className="py-2.5 text-right">{item.carbohydratesGrams} г</td>
                                   <td className="py-2.5 text-right text-[10px] text-slate-400">
-                                    {isOpenFoodFacts ? 'Open Food Facts' : 'Оценка'}
+                                    {isOpenFoodFacts ? 'Открытая база' : 'Оценка'}
                                   </td>
                                 </tr>
                               );
@@ -300,10 +300,10 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                           Что означают источники данных?
                         </span>
                         <p className="text-[11px]">
-                          <strong className="text-emerald-700">Open Food Facts</strong> — точные данные найдены в открытой мировой базе продуктов.
+                          <strong className="text-emerald-700">Открытая база продуктов</strong> — точные данные найдены в мировой базе продуктов.
                         </p>
                         <p className="text-[11px]">
-                          <strong className="text-amber-700">Кулинарная оценка (Fallback)</strong> — средняя кулинарная оценка при опечатках в названии или отсутствии продукта в базе, защищающая приложение от падения.
+                          <strong className="text-amber-700">Кулинарная оценка</strong> — базовый расчет, который используется, если продукт не найден в базе.
                         </p>
                       </div>
                     </div>

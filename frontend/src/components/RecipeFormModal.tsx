@@ -276,7 +276,7 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                 </option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.username} ({u.email || `ID: ${u.id}`})
+                    {u.username}{u.email ? ` — ${u.email}` : ''}
                   </option>
                 ))}
               </select>

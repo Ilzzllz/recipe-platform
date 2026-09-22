@@ -81,6 +81,33 @@ class NutritionReportServiceTest {
                 .hasMessageContaining("Async task with id " + unknownId + " was not found");
     }
 
+    @Test
+    @DisplayName("getTaskStatus should return a snapshot, not the mutable stored task")
+    void getTaskStatusShouldReturnSnapshot() {
+        Recipe recipe = sampleRecipe(1L, "Tomato Soup");
+        when(recipeRepository.findByIdWithFetchJoin(1L)).thenReturn(Optional.of(recipe));
+
+        UUID taskId = nutritionReportService.startNutritionReport(1L);
+        AsyncTaskResponseDto response = nutritionReportService.getTaskStatus(taskId);
+        response.setStatus(AsyncTaskStatus.COMPLETED);
+
+        assertThat(nutritionReportService.getTaskStatus(taskId).getStatus())
+                .isEqualTo(AsyncTaskStatus.IN_PROGRESS);
+    }
+
+    @Test
+    @DisplayName("first poll should return IN_PROGRESS even if the calculation has already completed")
+    void firstPollShouldReturnInProgressForCompletedTask() {
+        Recipe recipe = sampleRecipe(1L, "Tomato Soup");
+        when(recipeRepository.findByIdWithFetchJoin(1L)).thenReturn(Optional.of(recipe));
+
+        UUID taskId = nutritionReportService.startNutritionReport(1L);
+        taskStore.get(taskId).setStatus(AsyncTaskStatus.COMPLETED);
+
+        assertThat(nutritionReportService.pollTaskStatus(taskId).getStatus())
+                .isEqualTo(AsyncTaskStatus.IN_PROGRESS);
+    }
+
     private Recipe sampleRecipe(Long id, String title) {
         Recipe recipe = new Recipe();
         recipe.setId(id);

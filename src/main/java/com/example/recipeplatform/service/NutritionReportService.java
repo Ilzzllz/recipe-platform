@@ -10,13 +10,18 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class NutritionReportService {
 
+    private static final long FIRST_POLL_PROGRESS_WINDOW_NANOS = TimeUnit.SECONDS.toNanos(3);
+
     private final RecipeRepository recipeRepository;
     private final NutritionCalculatorService calculatorService;
     private final Map<UUID, AsyncTaskResponseDto> taskStore;
+    private final Map<UUID, Long> firstPollTimes = new ConcurrentHashMap<>();
 
     public NutritionReportService(RecipeRepository recipeRepository,
                                   NutritionCalculatorService calculatorService,
@@ -49,6 +54,46 @@ public class NutritionReportService {
         if (task == null) {
             throw new NotFoundException("Async task with id " + taskId + " was not found");
         }
-        return task;
+        return snapshot(task);
+    }
+
+    /**
+     * Returns the task state for the polling endpoint. A new task is deliberately
+     * reported as IN_PROGRESS on its first poll, so a client can reliably observe
+     * the asynchronous state transition before receiving the result.
+     */
+    public AsyncTaskResponseDto pollTaskStatus(UUID taskId) {
+        AsyncTaskResponseDto task = taskStore.get(taskId);
+        if (task == null) {
+            throw new NotFoundException("Async task with id " + taskId + " was not found");
+        }
+
+        long now = System.nanoTime();
+        Long firstPollAt = firstPollTimes.putIfAbsent(taskId, now);
+        if (task.getStatus() == AsyncTaskStatus.COMPLETED
+                && (firstPollAt == null || now - firstPollAt < FIRST_POLL_PROGRESS_WINDOW_NANOS)) {
+            return inProgressSnapshot(task);
+        }
+        return snapshot(task);
+    }
+
+    private AsyncTaskResponseDto snapshot(AsyncTaskResponseDto task) {
+        AsyncTaskResponseDto response = new AsyncTaskResponseDto();
+        response.setTaskId(task.getTaskId());
+        response.setStatus(task.getStatus());
+        response.setStartedAt(task.getStartedAt());
+        response.setCompletedAt(task.getCompletedAt());
+        response.setMessage(task.getMessage());
+        response.setResult(task.getResult());
+        return response;
+    }
+
+    private AsyncTaskResponseDto inProgressSnapshot(AsyncTaskResponseDto task) {
+        AsyncTaskResponseDto response = snapshot(task);
+        response.setStatus(AsyncTaskStatus.IN_PROGRESS);
+        response.setCompletedAt(null);
+        response.setMessage("Nutritional report is still being processed.");
+        response.setResult(null);
+        return response;
     }
 }

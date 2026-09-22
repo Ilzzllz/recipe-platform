@@ -233,7 +233,7 @@ public class RecipeController {
 
     @PostMapping("/{id}/nutrition-report")
     @Operation(summary = "Start asynchronous nutrition calculation via Open Food Facts API",
-            description = "Launches a background worker (@Async / CompletableFuture) that fetches nutrition data from Open Food Facts API. Immediately returns 202 Accepted with a task ID.")
+            description = "Launches a background worker (@Async / CompletableFuture) that fetches nutrition data from Open Food Facts API. Immediately returns 202 Accepted with a task ID; the task remains IN_PROGRESS for at least ten seconds so clients can poll it.")
     public ResponseEntity<AsyncTaskResponseDto> startNutritionReport(
             @Parameter(description = "Recipe ID", example = "1")
             @PathVariable Long id) {
@@ -248,6 +248,6 @@ public class RecipeController {
     public AsyncTaskResponseDto getNutritionReportStatus(
             @Parameter(description = "Task ID returned by start endpoint", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
             @PathVariable UUID taskId) {
-        return nutritionReportService.getTaskStatus(taskId);
+        return nutritionReportService.pollTaskStatus(taskId);
     }
 }
