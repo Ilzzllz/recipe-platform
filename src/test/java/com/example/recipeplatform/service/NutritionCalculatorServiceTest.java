@@ -40,13 +40,14 @@ class NutritionCalculatorServiceTest {
     private Map<UUID, AsyncTaskResponseDto> taskStore;
     private NutritionCalculatorService calculatorService;
     private MockRestServiceServer mockServer;
+    private RestClient restClient;
 
     @BeforeEach
     void setUp() {
         taskStore = new ConcurrentHashMap<>();
         RestClient.Builder restClientBuilder = RestClient.builder();
         mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
-        RestClient restClient = restClientBuilder.build();
+        restClient = restClientBuilder.build();
         calculatorService = new NutritionCalculatorService(
                 recipeRepository, new ObjectMapper(), taskStore, restClient, 0);
     }
@@ -113,6 +114,31 @@ class NutritionCalculatorServiceTest {
         NutritionReportDto report = calculatorService.calculateNutritionAsync(4L, taskId).get();
 
         assertThat(report.getIngredients()).hasSize(1);
+        assertThat(report.getIngredients().getFirst().getDataSource()).isEqualTo("Standard culinary estimate");
+        assertThat(task.getStatus()).isEqualTo(AsyncTaskStatus.COMPLETED);
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("calculateNutritionAsync should wait for the configured minimum progress time")
+    void calculateNutritionAsyncShouldWaitForMinimumProgressTime() throws Exception {
+        mockServer.expect(requestTo(containsString("search.pl")))
+                .andRespond(withSuccess("{\"products\": []}", MediaType.APPLICATION_JSON));
+
+        Recipe recipe = sampleRecipe(9L, "Delayed soup");
+        when(recipeRepository.findByIdWithFetchJoin(9L)).thenReturn(Optional.of(recipe));
+
+        UUID taskId = UUID.randomUUID();
+        AsyncTaskResponseDto task = new AsyncTaskResponseDto();
+        task.setTaskId(taskId);
+        task.setStatus(AsyncTaskStatus.IN_PROGRESS);
+        taskStore.put(taskId, task);
+
+        calculatorService = new NutritionCalculatorService(
+                recipeRepository, new ObjectMapper(), taskStore, restClient, 100);
+
+        NutritionReportDto report = calculatorService.calculateNutritionAsync(9L, taskId).get();
+
         assertThat(report.getIngredients().getFirst().getDataSource()).isEqualTo("Standard culinary estimate");
         assertThat(task.getStatus()).isEqualTo(AsyncTaskStatus.COMPLETED);
         mockServer.verify();

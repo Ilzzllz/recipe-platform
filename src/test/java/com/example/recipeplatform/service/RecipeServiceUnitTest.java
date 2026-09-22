@@ -412,6 +412,22 @@ class RecipeServiceUnitTest {
     }
 
     @Test
+    @DisplayName("createBulk should throw when a recipe category is not found")
+    void createBulkShouldThrowWhenCategoryNotFound() {
+        User user = new User();
+        user.setId(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(2L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> recipeService.createBulk(List.of(validRecipeRequest("Missing category soup"))))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Category with id 2 was not found");
+
+        verify(recipeRepository, never()).saveAndFlush(any(Recipe.class));
+        verify(recipeQueryCacheService).invalidateAll();
+    }
+
+    @Test
     @DisplayName("createBulkWithoutTransaction should save every valid recipe and invalidate query cache")
     void createBulkWithoutTransactionShouldSaveEveryValidRecipe() {
         stubReferences();

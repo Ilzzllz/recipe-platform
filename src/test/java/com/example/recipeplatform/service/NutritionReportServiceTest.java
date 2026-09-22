@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Map;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -106,6 +108,60 @@ class NutritionReportServiceTest {
 
         assertThat(nutritionReportService.pollTaskStatus(taskId).getStatus())
                 .isEqualTo(AsyncTaskStatus.IN_PROGRESS);
+    }
+
+    @Test
+    @DisplayName("pollTaskStatus should throw NotFoundException when task id is unknown")
+    void pollTaskStatusShouldThrowWhenNotFound() {
+        UUID unknownId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> nutritionReportService.pollTaskStatus(unknownId))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Async task with id " + unknownId + " was not found");
+    }
+
+    @Test
+    @DisplayName("pollTaskStatus should return a normal snapshot for an in-progress task")
+    void pollTaskStatusShouldReturnSnapshotForInProgressTask() {
+        UUID taskId = UUID.randomUUID();
+        AsyncTaskResponseDto task = new AsyncTaskResponseDto();
+        task.setTaskId(taskId);
+        task.setStatus(AsyncTaskStatus.IN_PROGRESS);
+        task.setMessage("Still working");
+        taskStore.put(taskId, task);
+
+        AsyncTaskResponseDto response = nutritionReportService.pollTaskStatus(taskId);
+
+        assertThat(response.getStatus()).isEqualTo(AsyncTaskStatus.IN_PROGRESS);
+        assertThat(response.getMessage()).isEqualTo("Still working");
+        assertThat(response).isNotSameAs(task);
+    }
+
+    @Test
+    @DisplayName("pollTaskStatus should return the completed snapshot after the first-poll progress window")
+    @SuppressWarnings("unchecked")
+    void pollTaskStatusShouldReturnCompletedSnapshotAfterProgressWindow() {
+        UUID taskId = UUID.randomUUID();
+        AsyncTaskResponseDto task = new AsyncTaskResponseDto();
+        task.setTaskId(taskId);
+        task.setStatus(AsyncTaskStatus.COMPLETED);
+        task.setMessage("Done");
+        taskStore.put(taskId, task);
+
+        assertThat(nutritionReportService.pollTaskStatus(taskId).getStatus())
+                .isEqualTo(AsyncTaskStatus.IN_PROGRESS);
+        assertThat(nutritionReportService.pollTaskStatus(taskId).getStatus())
+                .isEqualTo(AsyncTaskStatus.IN_PROGRESS);
+
+        Map<UUID, Long> firstPollTimes = (Map<UUID, Long>) ReflectionTestUtils
+                .getField(nutritionReportService, "firstPollTimes");
+        firstPollTimes.put(taskId, System.nanoTime() - TimeUnit.SECONDS.toNanos(4));
+
+        AsyncTaskResponseDto response = nutritionReportService.pollTaskStatus(taskId);
+
+        assertThat(response.getStatus()).isEqualTo(AsyncTaskStatus.COMPLETED);
+        assertThat(response.getMessage()).isEqualTo("Done");
+        assertThat(response).isNotSameAs(task);
     }
 
     private Recipe sampleRecipe(Long id, String title) {
