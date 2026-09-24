@@ -94,9 +94,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> handleIntegrityViolation(DataIntegrityViolationException exception,
                                                              HttpServletRequest request) {
-        String causeMessage = exception.getMostSpecificCause() != null
-                ? exception.getMostSpecificCause().getMessage()
-                : exception.getMessage();
+        String causeMessage = exception.getMostSpecificCause().getMessage();
+        if (causeMessage == null) {
+            causeMessage = exception.getMessage();
+        }
         logger.error("HTTP 409 [CONFLICT] on {} {}: {}",
                 request.getMethod(), request.getRequestURI(), causeMessage);
         return buildError(HttpStatus.CONFLICT,
