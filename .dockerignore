@@ -1,4 +1,3 @@
-# Всё лишнее не попадает в build context бэкенда
 .git
 .github
 .idea

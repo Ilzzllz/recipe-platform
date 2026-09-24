@@ -76,13 +76,10 @@
 
 #### Реализация счетчиков:
 ```java
-// 1. Обычный int (НЕ потокобезопасный)
 private int unsafeCounter = 0;
 
-// 2. Атомарный счетчик (потокобезопасный)
 private final AtomicLong atomicCounter = new AtomicLong(0);
 
-// 3. Синхронизированный счетчик (потокобезопасный)
 private int synchronizedCounter = 0;
 ```
 

@@ -137,6 +137,36 @@ class NutritionCalculatorServiceTest {
     }
 
     @Test
+    @DisplayName("calculateNutritionAsync should restore the interrupt flag when waiting is interrupted")
+    void calculateNutritionAsyncShouldRestoreInterruptFlag() {
+        Ingredient tomato = ingredient(10L, "Tomato", "18", "0.9", "0.2", "3.9", "1");
+        Recipe recipe = new Recipe();
+        recipe.setId(10L);
+        recipe.setTitle("Interrupted soup");
+        recipe.setIngredients(Set.of(tomato));
+
+        when(recipeRepository.findByIdWithFetchJoin(10L)).thenReturn(Optional.of(recipe));
+
+        calculatorService = new NutritionCalculatorService(recipeRepository, taskStore, 1_000);
+        UUID taskId = UUID.randomUUID();
+        AsyncTaskResponseDto task = new AsyncTaskResponseDto();
+        task.setTaskId(taskId);
+        task.setStatus(AsyncTaskStatus.IN_PROGRESS);
+        taskStore.put(taskId, task);
+
+        Thread.currentThread().interrupt();
+        try {
+            CompletableFuture<NutritionReportDto> future = calculatorService.calculateNutritionAsync(10L, taskId);
+
+            assertThat(future).isCompletedExceptionally();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            assertThat(task.getStatus()).isEqualTo(AsyncTaskStatus.FAILED);
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
     @DisplayName("calculateNutritionAsync should mark task FAILED when unexpected error occurs")
     void calculateNutritionAsyncShouldHandleFailure() {
         when(recipeRepository.findByIdWithFetchJoin(3L)).thenThrow(new RuntimeException("Database error"));

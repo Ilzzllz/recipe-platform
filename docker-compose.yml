@@ -1,5 +1,3 @@
-# Локальный запуск всего стека:  docker compose up --build
-# Параметры берутся из .env (скопируйте .env.example -> .env).
 name: recipe-platform
 
 services:
@@ -31,7 +29,7 @@ services:
     restart: unless-stopped
     depends_on:
       db:
-        condition: service_healthy   # старт только после pg_isready = OK
+        condition: service_healthy
     environment:
       PORT: ${BACKEND_PORT:-8080}
       DB_URL: ${DB_URL:-jdbc:postgresql://db:5432/recipe_db}

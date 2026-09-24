@@ -623,10 +623,9 @@ docker compose up --build
 В корне проекта (`recipe-platform/`), в PowerShell:
 
 ```powershell
-$env:JAVA_HOME = "C:\Path\To\jdk-21"        # если java -version показывает не 21-ю версию
+$env:JAVA_HOME = "C:\Path\To\jdk-21"
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 
-# только если у вас нестандартный порт/пароль/пользователь PostgreSQL:
 $env:DB_URL = "jdbc:postgresql://localhost:5432/recipe_db"
 $env:DB_USERNAME = "postgres"
 $env:DB_PASSWORD = "07Omemeg"

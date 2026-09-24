@@ -1,8 +1,5 @@
-# Все динамические и чувствительные параметры берутся из переменных окружения
-# (см. .env.example). Значение после двоеточия — дефолт для локального запуска.
 server:
   port: ${PORT:8080}
-  # Корректные схема/хост за reverse-proxy PaaS (Render, Koyeb, Railway)
   forward-headers-strategy: framework
   shutdown: graceful
 
@@ -10,8 +7,6 @@ spring:
   application:
     name: recipe-platform
   datasource:
-    # DB_URL имеет приоритет; иначе URL собирается из DB_HOST/DB_PORT/DB_NAME
-    # (так Render передаёт реквизиты managed PostgreSQL в render.yaml).
     url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:recipe_db}}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:07Omemeg}
@@ -27,10 +22,6 @@ spring:
       hibernate:
         format_sql: true
         generate_statistics: true
-  # Database schema and seed data come exclusively from schema.sql / data.sql,
-  # executed by Spring Boot's own SQL initializer on every startup. Hibernate
-  # only validates the JPA mappings against that schema (ddl-auto=validate);
-  # it never creates or alters tables itself.
   sql:
     init:
       mode: always
@@ -39,8 +30,6 @@ app:
   async:
     nutrition-initial-delay-ms: ${NUTRITION_INITIAL_DELAY_MS:10000}
   cors:
-    # Список origin-паттернов через запятую, например:
-    # https://recipe-platform-frontend.onrender.com,http://localhost:*
     allowed-origins: ${CORS_ORIGINS:http://localhost:*,http://127.0.0.1:*}
 
 springdoc:

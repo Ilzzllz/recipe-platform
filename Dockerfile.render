@@ -1,26 +1,12 @@
 # syntax=docker/dockerfile:1.7
-# ============================================================
-#  Single-service image for free PaaS (Render / Koyeb / Railway):
-#  React SPA is built and bundled into Spring Boot's static
-#  resources, so the whole app lives on ONE URL:
-#    /            -> SPA (index.html + assets)
-#    /api/**      -> REST API
-#    /actuator/** -> health checks
-#  No CORS and no VITE_API_URL are needed.
-#  Local multi-container setup keeps using Dockerfile + frontend/Dockerfile.
-# ============================================================
-
-# ---------- Stage 1: frontend build ----------
 FROM node:20-alpine AS frontend
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts --no-audit --no-fund
 COPY frontend/ ./
-# Same origin as the API -> relative /api requests
 ENV VITE_API_URL=""
 RUN npm run build
 
-# ---------- Stage 2: backend build ----------
 FROM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /workspace
 
@@ -30,13 +16,11 @@ RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q dependency:go-offline
 
 COPY src/ src/
-# SPA goes into classpath:/static, Spring Boot serves index.html at "/"
 COPY --from=frontend /app/dist/ src/main/resources/static/
 RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q package -DskipTests -Djacoco.skip=true \
     && cp target/*.jar app.jar
 RUN java -Djarmode=tools -jar app.jar extract --layers --launcher --destination extracted
 
-# ---------- Stage 3: runtime ----------
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 
@@ -50,7 +34,6 @@ COPY --from=build --chown=spring:spring /workspace/extracted/application/ ./
 
 USER spring
 
-# Render передаёт свой PORT (по умолчанию 10000) — Spring читает его через ${PORT:8080}
 ENV PORT=8080 \
     JAVA_OPTS="-XX:MaxRAMPercentage=70.0 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k"
 

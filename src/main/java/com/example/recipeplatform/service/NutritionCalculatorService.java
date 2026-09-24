@@ -97,17 +97,26 @@ public class NutritionCalculatorService {
                 task.setStatus(AsyncTaskStatus.COMPLETED);
             }
             return CompletableFuture.completedFuture(report);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return failedTask(taskId, task, e);
         } catch (Exception e) {
-            logger.error("Failed to compute nutrition report for task {}: {}", taskId, e.getMessage());
-            if (task != null) {
-                task.setStatus(AsyncTaskStatus.FAILED);
-                task.setCompletedAt(LocalDateTime.now(Clock.systemDefaultZone()));
-                task.setMessage("Failed to compute nutrition report: " + e.getMessage());
-            }
-            CompletableFuture<NutritionReportDto> failed = new CompletableFuture<>();
-            failed.completeExceptionally(e);
-            return failed;
+            return failedTask(taskId, task, e);
         }
+    }
+
+    private CompletableFuture<NutritionReportDto> failedTask(UUID taskId,
+                                                             AsyncTaskResponseDto task,
+                                                             Exception exception) {
+        logger.error("Failed to compute nutrition report for task {}: {}", taskId, exception.getMessage());
+        if (task != null) {
+            task.setStatus(AsyncTaskStatus.FAILED);
+            task.setCompletedAt(LocalDateTime.now(Clock.systemDefaultZone()));
+            task.setMessage("Failed to compute nutrition report: " + exception.getMessage());
+        }
+        CompletableFuture<NutritionReportDto> failed = new CompletableFuture<>();
+        failed.completeExceptionally(exception);
+        return failed;
     }
 
     private void waitUntilMinimumProgressTimeHasElapsed(long calculationStartedAt) throws InterruptedException {

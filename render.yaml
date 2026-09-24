@@ -1,16 +1,3 @@
-# Render Blueprint: https://render.com/docs/blueprint-spec
-# Dashboard -> New -> Blueprint -> выбрать этот репозиторий -> Apply.
-#
-# Бесплатная схема: 1 Web Service (Docker, SPA + REST API на одном URL) + 1 PostgreSQL.
-#   https://<имя-сервиса>.onrender.com/                 -> React SPA
-#   https://<имя-сервиса>.onrender.com/api/recipes      -> REST API
-#   https://<имя-сервиса>.onrender.com/actuator/health  -> healthcheck
-# Реквизиты БД Render передаёт в сервис сам (fromDatabase), вручную ничего вводить не нужно.
-#
-# autoDeploy: false — новые версии выкатывает GitHub Actions через Deploy Hook
-# только после успешной сборки и тестов (см. .github/workflows/deploy.yml).
-# Если секреты в GitHub не настроены, можно нажать Manual Deploy в Dashboard.
-
 databases:
   - name: recipe-platform-db
     plan: free
@@ -18,7 +5,7 @@ databases:
     databaseName: recipe_db
     user: recipe_user
     postgresMajorVersion: "16"
-    ipAllowList: []            # доступ только из приватной сети Render
+    ipAllowList: []
 
 services:
   - type: web
@@ -41,13 +28,11 @@ services:
         fromDatabase: { name: recipe-platform-db, property: user }
       - key: DB_PASSWORD
         fromDatabase: { name: recipe-platform-db, property: password }
-      # SPA и API на одном домене; паттерн оставлен на случай отдельного фронтенда
       - key: CORS_ORIGINS
         value: https://*.onrender.com
       - key: JAVA_OPTS
         value: -XX:MaxRAMPercentage=70.0 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k
       - key: DB_POOL_SIZE
         value: "3"
-      # Демонстрационная задержка асинхронного отчёта КБЖУ (как локально)
       - key: NUTRITION_INITIAL_DELAY_MS
         value: "10000"

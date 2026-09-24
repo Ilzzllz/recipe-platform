@@ -73,15 +73,12 @@ List<CookingStep> steps = dto.getSteps().stream()
 #### 2. Использование Optional:
 В методе `convertToRecipe` поиск связанных сущностей возвращает `Optional<T>`, из которого сущность извлекается через безопасный метод `.orElseThrow(...)`:
 ```java
-// Поиск автора (Optional<User>)
 User author = userRepository.findById(dto.getAuthorId())
         .orElseThrow(() -> new NotFoundException("User with id " + dto.getAuthorId() + " was not found"));
 
-// Поиск категории (Optional<Category>)
 Category category = categoryRepository.findById(dto.getCategoryId())
         .orElseThrow(() -> new NotFoundException("Category with id " + dto.getCategoryId() + " was not found"));
 
-// Поиск каждого ингредиента (Optional<Ingredient>)
 Set<Ingredient> ingredients = dto.getIngredientIds().stream()
         .map(id -> ingredientRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Ingredient with id " + id + " was not found")))
@@ -101,7 +98,6 @@ Set<Ingredient> ingredients = dto.getIngredientIds().stream()
 ### Где и как реализовано в коде
 В [`RecipeService.java`](file:///C:/Users/Formatis/Documents/GitHub/recipe-platform/src/main/java/com/example/recipeplatform/service/RecipeService.java):
 ```java
-// Атомарный вариант: общая транзакция
 @Transactional
 public List<RecipeDto> createBulk(List<RecipeCreateDto> dtos) {
     try {
@@ -111,7 +107,6 @@ public List<RecipeDto> createBulk(List<RecipeCreateDto> dtos) {
     }
 }
 
-// Неатомарный вариант: нет общей транзакции метода
 public List<RecipeDto> createBulkWithoutTransaction(List<RecipeCreateDto> dtos) {
     try {
         return saveBulkRecipes(dtos);

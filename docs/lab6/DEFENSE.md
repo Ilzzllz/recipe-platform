@@ -91,7 +91,7 @@
    ```java
    class MyThread extends Thread {
        @Override
-       public void run() { /* работа */ }
+       public void run() { }
    }
    new MyThread().start();
    ```

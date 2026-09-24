@@ -21,7 +21,6 @@
         <sonar.organization>ilzzllz</sonar.organization>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
-        <!-- ВОТ ЭТА СТРОКА ОТВЕЧАЕТ ЗА ИСКЛЮЧЕНИЯ -->
         <sonar.coverage.exclusions>
             **/config/**/*,
             **/controller/**/*,
@@ -111,7 +110,6 @@
                             </formats>
                         </configuration>
                     </execution>
-                    <!-- Сборка падает, если бизнес-логика (пакет service) покрыта тестами меньше чем на 100% -->
                     <execution>
                         <id>jacoco-check-services</id>
                         <phase>verify</phase>
