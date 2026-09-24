@@ -7,19 +7,16 @@ import com.example.recipeplatform.dto.NutritionReportDto;
 import com.example.recipeplatform.exception.NotFoundException;
 import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
+import com.example.recipeplatform.model.RecipeIngredient;
 import com.example.recipeplatform.repository.RecipeRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClient;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,34 +24,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class NutritionCalculatorService {
 
     private static final Logger logger = LoggerFactory.getLogger(NutritionCalculatorService.class);
-    private static final String OPEN_FOOD_FACTS_SEARCH_URL =
-            "https://world.openfoodfacts.org/cgi/search.pl?search_terms={query}&search_simple=1&action=process&json=1&page_size=1";
+    private static final String INTERNAL_DATA_SOURCE = "Ingredient nutrition data stored in the recipe_platform database";
 
     private final RecipeRepository recipeRepository;
-    private final RestClient restClient;
-    private final ObjectMapper objectMapper;
     private final Map<UUID, AsyncTaskResponseDto> taskStore;
     private final long initialDelayMs;
 
     public NutritionCalculatorService(RecipeRepository recipeRepository,
-                                      ObjectMapper objectMapper,
                                       Map<UUID, AsyncTaskResponseDto> taskStore,
-                                      RestClient restClient,
                                       @Value("${app.async.nutrition-initial-delay-ms:10000}") long initialDelayMs) {
         this.recipeRepository = recipeRepository;
-        this.objectMapper = objectMapper;
         this.taskStore = taskStore;
-        this.restClient = restClient;
         this.initialDelayMs = initialDelayMs;
     }
 
     @Async("recipeTaskExecutor")
+    @Transactional(readOnly = true)
     public CompletableFuture<NutritionReportDto> calculateNutritionAsync(Long recipeId, UUID taskId) {
         AsyncTaskResponseDto task = taskStore.get(taskId);
         long calculationStartedAt = System.nanoTime();
@@ -68,13 +58,25 @@ public class NutritionCalculatorService {
             double totalFats = 0.0;
             double totalCarbs = 0.0;
 
-            for (Ingredient ingredient : recipe.getIngredients()) {
-                IngredientNutritionDto nut = fetchIngredientNutrition(ingredient.getName());
-                ingredientNutritions.add(nut);
-                totalCalories += nut.getCaloriesKcal();
-                totalProteins += nut.getProteinsGrams();
-                totalFats += nut.getFatsGrams();
-                totalCarbs += nut.getCarbohydratesGrams();
+            if (recipe.getRecipeIngredientDetails() != null && !recipe.getRecipeIngredientDetails().isEmpty()) {
+                for (RecipeIngredient detail : recipe.getRecipeIngredientDetails()) {
+                    double factor = grams(detail.getQuantity(), detail.getUnit(), detail.getIngredient().getGramsPerUnit()) / 100.0;
+                    IngredientNutritionDto nut = toIngredientNutrition(detail.getIngredient());
+                    ingredientNutritions.add(nut);
+                    totalCalories += nut.getCaloriesKcal() * factor;
+                    totalProteins += nut.getProteinsGrams() * factor;
+                    totalFats += nut.getFatsGrams() * factor;
+                    totalCarbs += nut.getCarbohydratesGrams() * factor;
+                }
+            } else {
+                for (Ingredient ingredient : recipe.getIngredients()) {
+                    IngredientNutritionDto nut = toIngredientNutrition(ingredient);
+                    ingredientNutritions.add(nut);
+                    totalCalories += nut.getCaloriesKcal();
+                    totalProteins += nut.getProteinsGrams();
+                    totalFats += nut.getFatsGrams();
+                    totalCarbs += nut.getCarbohydratesGrams();
+                }
             }
 
             NutritionReportDto report = new NutritionReportDto();
@@ -116,29 +118,25 @@ public class NutritionCalculatorService {
         }
     }
 
-    private IngredientNutritionDto fetchIngredientNutrition(String ingredientName) {
-        try {
-            String encoded = URLEncoder.encode(ingredientName, StandardCharsets.UTF_8);
-            String rawJson = restClient.get()
-                    .uri(OPEN_FOOD_FACTS_SEARCH_URL, encoded)
-                    .retrieve()
-                    .body(String.class);
+    private IngredientNutritionDto toIngredientNutrition(Ingredient ingredient) {
+        return new IngredientNutritionDto(
+                ingredient.getName(),
+                value(ingredient.getCaloriesPer100g()),
+                value(ingredient.getProteinsPer100g()),
+                value(ingredient.getFatsPer100g()),
+                value(ingredient.getCarbohydratesPer100g()),
+                INTERNAL_DATA_SOURCE);
+    }
 
-            if (StringUtils.hasText(rawJson)) {
-                JsonNode root = objectMapper.readTree(rawJson);
-                JsonNode products = root.path("products");
-                if (products.isArray() && !products.isEmpty()) {
-                    JsonNode nutriments = products.get(0).path("nutriments");
-                    double kcal = nutriments.path("energy-kcal_100g").asDouble(nutriments.path("energy-kcal").asDouble(50.0));
-                    double proteins = nutriments.path("proteins_100g").asDouble(nutriments.path("proteins").asDouble(2.0));
-                    double fat = nutriments.path("fat_100g").asDouble(nutriments.path("fat").asDouble(1.0));
-                    double carbs = nutriments.path("carbohydrates_100g").asDouble(nutriments.path("carbohydrates").asDouble(8.0));
-                    return new IngredientNutritionDto(ingredientName, kcal, proteins, fat, carbs, "Open Food Facts API");
-                }
-            }
-        } catch (Exception ex) {
-            logger.warn("Could not query Open Food Facts API for '{}': {}", ingredientName, ex.getMessage());
+    private double value(BigDecimal value) {
+        return value == null ? 0.0 : value.doubleValue();
+    }
+
+    private double grams(BigDecimal quantity, String unit, BigDecimal gramsPerUnit) {
+        double value = quantity == null ? 0 : quantity.doubleValue();
+        if (unit != null && (unit.equalsIgnoreCase("шт") || unit.equalsIgnoreCase("pcs"))) {
+            return value * (gramsPerUnit == null ? 1 : gramsPerUnit.doubleValue());
         }
-        return new IngredientNutritionDto(ingredientName, 45.0, 1.5, 0.5, 9.0, "Standard culinary estimate");
+        return value;
     }
 }

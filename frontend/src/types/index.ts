@@ -26,6 +26,17 @@ export interface Category {
 export interface Ingredient {
   id: number;
   name: string;
+  caloriesPer100g?: number;
+  proteinsPer100g?: number;
+  fatsPer100g?: number;
+  carbohydratesPer100g?: number;
+  gramsPerUnit?: number;
+}
+
+export interface RecipeIngredient {
+  ingredient: Ingredient;
+  quantity: number;
+  unit: string;
 }
 
 export interface CookingStep {
@@ -41,7 +52,27 @@ export interface Recipe {
   author: Author;
   category: Category;
   ingredients: Ingredient[];
+  recipeIngredients?: RecipeIngredient[];
   steps: CookingStep[];
+  portions?: number;
+  nutrition?: NutritionSummary;
+}
+
+export interface NutritionSummary {
+  totalWeightGrams: number;
+  caloriesKcal: number;
+  proteinsGrams: number;
+  fatsGrams: number;
+  carbohydratesGrams: number;
+  caloriesPer100g: number;
+  proteinsPer100g: number;
+  fatsPer100g: number;
+  carbohydratesPer100g: number;
+  caloriesPerPortion: number;
+  proteinsPerPortion: number;
+  fatsPerPortion: number;
+  carbohydratesPerPortion: number;
+  portions: number;
 }
 
 export interface RecipeCreatePayload {
@@ -50,6 +81,12 @@ export interface RecipeCreatePayload {
   authorId: number;
   categoryId: number;
   ingredientIds: number[];
+  recipeIngredients?: {
+    ingredientId: number;
+    quantity: number;
+    unit: string;
+  }[];
+  portions?: number;
   steps: {
     stepOrder: number;
     description: string;
@@ -98,7 +135,6 @@ export interface IngredientNutrition {
   fatGrams?: number;
   carbohydratesGrams: number;
   dataSource?: string;
-  foundInOpenFoodFacts?: boolean;
 }
 
 export interface NutritionReport {

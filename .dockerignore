@@ -1,0 +1,23 @@
+# Всё лишнее не попадает в build context бэкенда
+.git
+.github
+.idea
+.vscode
+*.iml
+target
+frontend/node_modules
+frontend/dist
+frontend/*.tsbuildinfo
+logs
+*.log
+artifacts
+docs
+jmeter
+backend_pid.csv
+.env
+.env.*
+!.env.example
+*.md
+Dockerfile
+Dockerfile.render
+docker-compose*.yml

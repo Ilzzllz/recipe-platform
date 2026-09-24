@@ -4,6 +4,7 @@ import com.example.recipeplatform.dto.CookingStepCreateDto;
 import com.example.recipeplatform.dto.CookingStepDto;
 import com.example.recipeplatform.dto.RecipeStepCreateDto;
 import com.example.recipeplatform.model.CookingStep;
+import com.example.recipeplatform.util.TextNormalizer;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,13 +34,13 @@ public class CookingStepMapper {
     public CookingStep toEntity(RecipeStepCreateDto dto) {
         CookingStep step = new CookingStep();
         step.setStepOrder(dto.getStepOrder());
-        step.setDescription(dto.getDescription());
+        step.setDescription(TextNormalizer.normalize(dto.getDescription()));
         return step;
     }
 
     public void updateEntity(CookingStep step, CookingStepCreateDto dto) {
         step.setStepOrder(dto.getStepOrder());
-        step.setDescription(dto.getDescription());
+        step.setDescription(TextNormalizer.normalize(dto.getDescription()));
     }
 
     public List<CookingStepDto> toDtoList(List<CookingStep> steps) {

@@ -25,6 +25,8 @@ public class RecipeCreateDto {
     @Schema(description = "Short recipe description", example = "Smooth autumn soup with pumpkin and cream")
     private String description;
 
+    private Integer portions = 1;
+
     @NotNull
     @Schema(description = "Existing author id", example = "1")
     private Long authorId;
@@ -33,9 +35,11 @@ public class RecipeCreateDto {
     @Schema(description = "Existing category id", example = "2")
     private Long categoryId;
 
-    @NotEmpty
     @ArraySchema(schema = @Schema(description = "Existing ingredient id", example = "3"))
     private Set<Long> ingredientIds;
+
+    @Valid
+    private List<RecipeIngredientCreateDto> recipeIngredients;
 
     @Valid
     @NotEmpty

@@ -38,6 +38,9 @@ public class Recipe {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
+    @Column(nullable = false)
+    private Integer portions = 1;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
@@ -57,6 +60,10 @@ public class Recipe {
             inverseJoinColumns = @JoinColumn(name = "ingredient_id")
     )
     private Set<Ingredient> ingredients = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
+    private List<RecipeIngredient> recipeIngredientDetails = new ArrayList<>();
     public void addStep(CookingStep step) {
         steps.add(step);
         step.setRecipe(this);
@@ -86,6 +93,17 @@ public class Recipe {
         }
         for (Ingredient ingredient : newIngredients) {
             addIngredient(ingredient);
+        }
+    }
+
+    public void replaceRecipeIngredientDetails(List<RecipeIngredient> newDetails) {
+        recipeIngredientDetails.clear();
+        if (newDetails == null) {
+            return;
+        }
+        for (RecipeIngredient detail : newDetails) {
+            detail.setRecipe(this);
+            recipeIngredientDetails.add(detail);
         }
     }
 }

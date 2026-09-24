@@ -24,7 +24,7 @@ public class AsyncTaskResponseDto {
     @Schema(description = "Timestamp when the task was finished (null if still running)")
     private LocalDateTime completedAt;
 
-    @Schema(description = "Human-readable progress or summary description", example = "Processing 3 ingredients from Open Food Facts API...")
+    @Schema(description = "Human-readable progress or summary description", example = "Calculating nutrition from stored ingredient data for 3 ingredients...")
     private String message;
 
     @Schema(description = "Final result of the asynchronous computation (available when status is COMPLETED)")

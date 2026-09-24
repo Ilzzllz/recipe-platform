@@ -26,7 +26,9 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
   const [description, setDescription] = useState('');
   const [authorId, setAuthorId] = useState<number | ''>('');
   const [categoryId, setCategoryId] = useState<number | ''>('');
-  const [selectedIngredientIds, setSelectedIngredientIds] = useState<number[]>([]);
+  const [portions, setPortions] = useState(4);
+  const [ingredientRows, setIngredientRows] = useState<{ ingredientId: number; quantity: number; unit: string }[]>([]);
+  const [ingredientSearch, setIngredientSearch] = useState('');
   const [steps, setSteps] = useState<{ stepOrder: number; description: string }[]>([
     { stepOrder: 1, description: '' },
   ]);
@@ -42,7 +44,8 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       setDescription(initialRecipe.description || '');
       setAuthorId(initialRecipe.author?.id || '');
       setCategoryId(initialRecipe.category?.id || '');
-      setSelectedIngredientIds(initialRecipe.ingredients?.map((i) => i.id) || []);
+      setPortions(initialRecipe.portions || initialRecipe.nutrition?.portions || 4);
+      setIngredientRows(initialRecipe.recipeIngredients?.map((row) => ({ ingredientId: row.ingredient.id, quantity: row.quantity, unit: row.unit })) || initialRecipe.ingredients?.map((i) => ({ ingredientId: i.id, quantity: 100, unit: 'г' })) || []);
       const sortedSteps = [...(initialRecipe.steps || [])]
         .sort((a, b) => a.stepOrder - b.stepOrder)
         .map((s, idx) => ({ stepOrder: idx + 1, description: s.description }));
@@ -52,7 +55,8 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       setDescription('');
       setAuthorId(users[0]?.id || '');
       setCategoryId(categories[0]?.id || '');
-      setSelectedIngredientIds([]);
+      setPortions(4);
+      setIngredientRows([]);
       setSteps([{ stepOrder: 1, description: '' }]);
     }
     setGlobalError(null);
@@ -103,10 +107,14 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
   };
 
   const toggleIngredient = (id: number) => {
-    setSelectedIngredientIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+    setIngredientRows((prev) => prev.some((item) => item.ingredientId === id)
+      ? prev.filter((item) => item.ingredientId !== id)
+      : [...prev, { ingredientId: id, quantity: 100, unit: 'г' }]);
     clearFieldError('ingredientIds');
+  };
+
+  const updateIngredient = (id: number, patch: Partial<{ quantity: number; unit: string }>) => {
+    setIngredientRows((prev) => prev.map((row) => row.ingredientId === id ? { ...row, ...patch } : row));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,7 +140,7 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       errors.categoryId = 'Выберите категорию рецепта';
     }
 
-    if (selectedIngredientIds.length === 0) {
+    if (ingredientRows.length === 0 || ingredientRows.some((row) => !row.quantity || row.quantity <= 0)) {
       errors.ingredientIds = 'Выберите хотя бы один ингредиент из списка';
     }
 
@@ -155,7 +163,9 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       description: description.trim(),
       authorId: Number(authorId),
       categoryId: Number(categoryId),
-      ingredientIds: selectedIngredientIds,
+      ingredientIds: ingredientRows.map((row) => row.ingredientId),
+      recipeIngredients: ingredientRows,
+      portions,
       steps: cleanSteps,
     };
 
@@ -314,6 +324,10 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                 <p className="text-xs text-red-600 mt-1 font-medium">{fieldErrors.categoryId}</p>
               )}
             </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Порций</label>
+              <input type="number" min="1" max="100" value={portions} onChange={(e) => setPortions(Math.max(1, Number(e.target.value)))} className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
           </div>
 
           <div
@@ -331,16 +345,15 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                 </label>
               </div>
               <span className="text-xs font-semibold text-emerald-800 bg-emerald-100/60 px-2 py-0.5 rounded-lg">
-                Выбрано: {selectedIngredientIds.length}
+                Выбрано: {ingredientRows.length}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mb-3">
-              Нажмите на ингредиент, чтобы привязать его к рецепту.
-            </p>
-
-            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
-              {ingredients.map((ing) => {
-                const isSelected = selectedIngredientIds.includes(ing.id);
+            <div className="flex gap-2 mb-3">
+              <input value={ingredientSearch} onChange={(e) => setIngredientSearch(e.target.value)} placeholder="Поиск ингредиента" className="flex-1 px-3 py-2 rounded-xl border text-sm" />
+            </div>
+            <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1">
+              {ingredients.filter((ing) => ing.name.toLocaleLowerCase().includes(ingredientSearch.toLocaleLowerCase())).map((ing) => {
+                const isSelected = ingredientRows.some((row) => row.ingredientId === ing.id);
                 return (
                   <button
                     type="button"
@@ -357,6 +370,9 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
                   </button>
                 );
               })}
+            </div>
+            <div className="space-y-2 mt-3">
+              {ingredientRows.map((row) => <div key={row.ingredientId} className="flex gap-2 items-center"><span className="flex-1 text-sm font-medium text-slate-700">{ingredients.find((item) => item.id === row.ingredientId)?.name}</span><input type="number" min="0.01" step="0.01" value={row.quantity} onChange={(e) => updateIngredient(row.ingredientId, { quantity: Number(e.target.value) })} className="w-24 px-2 py-1.5 rounded-lg border text-sm" /><select value={row.unit} onChange={(e) => updateIngredient(row.ingredientId, { unit: e.target.value })} className="w-20 px-2 py-1.5 rounded-lg border text-sm"><option>г</option><option>мл</option><option>шт</option></select></div>)}
             </div>
             {fieldErrors.ingredientIds && (
               <p className="text-xs text-red-600 mt-2 font-medium">{fieldErrors.ingredientIds}</p>

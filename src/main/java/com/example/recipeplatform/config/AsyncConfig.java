@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.web.client.RestClient;
 
 import java.util.Map;
 import java.util.UUID;
@@ -30,10 +29,5 @@ public class AsyncConfig {
     @Bean
     public Map<UUID, AsyncTaskResponseDto> taskStore() {
         return new ConcurrentHashMap<>();
-    }
-
-    @Bean
-    public RestClient openFoodFactsRestClient() {
-        return RestClient.builder().build();
     }
 }

@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "app.seed.enabled=true")
+@SpringBootTest
 @AutoConfigureMockMvc
 @EnabledIfEnvironmentVariable(named = "RUN_DB_TESTS", matches = "true")
 class RecipePlatformApplicationTests {
@@ -88,8 +88,8 @@ class RecipePlatformApplicationTests {
     void cacheKeyShouldUseNormalizedCompositeKey() {
         Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "id"));
 
-        CacheKey first = CacheKey.from("jpql", " Anna ", " Soups ", pageable);
-        CacheKey second = CacheKey.from("jpql", "anna", "soups", pageable);
+        CacheKey first = CacheKey.from("jpql", " Anna ", " Супы ", pageable);
+        CacheKey second = CacheKey.from("jpql", "anna", "супы", pageable);
 
         assertThat(first)
                 .isEqualTo(second)
@@ -102,13 +102,13 @@ class RecipePlatformApplicationTests {
         Statistics statistics = statistics();
 
         statistics.clear();
-        Page<RecipeFilterDto> firstCall = recipeService.findByAuthorAndCategoryJPQL("anna", "Soups", pageable);
+        Page<RecipeFilterDto> firstCall = recipeService.findByAuthorAndCategoryJPQL("anna", "Супы", pageable);
 
         assertThat(firstCall.getContent()).isNotEmpty();
         assertThat(statistics.getPrepareStatementCount()).isLessThanOrEqualTo(2L);
 
         statistics.clear();
-        Page<RecipeFilterDto> cachedCall = recipeService.findByAuthorAndCategoryJPQL("anna", "Soups", pageable);
+        Page<RecipeFilterDto> cachedCall = recipeService.findByAuthorAndCategoryJPQL("anna", "Супы", pageable);
 
         assertThat(cachedCall.getContent()).hasSameSizeAs(firstCall.getContent());
         assertThat(statistics.getPrepareStatementCount()).isZero();
@@ -120,13 +120,13 @@ class RecipePlatformApplicationTests {
         Statistics statistics = statistics();
 
         statistics.clear();
-        Page<RecipeFilterDto> firstCall = recipeService.findByAuthorAndCategoryNative("anna", "Soups", pageable);
+        Page<RecipeFilterDto> firstCall = recipeService.findByAuthorAndCategoryNative("anna", "Супы", pageable);
 
         assertThat(firstCall.getContent()).isNotEmpty();
         assertThat(statistics.getPrepareStatementCount()).isLessThanOrEqualTo(2L);
 
         statistics.clear();
-        Page<RecipeFilterDto> cachedCall = recipeService.findByAuthorAndCategoryNative("anna", "Soups", pageable);
+        Page<RecipeFilterDto> cachedCall = recipeService.findByAuthorAndCategoryNative("anna", "Супы", pageable);
 
         assertThat(cachedCall.getContent()).hasSameSizeAs(firstCall.getContent());
         assertThat(statistics.getPrepareStatementCount()).isZero();
@@ -137,13 +137,13 @@ class RecipePlatformApplicationTests {
         Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "id"));
         Statistics statistics = statistics();
 
-        recipeService.findByAuthorAndCategoryJPQL("anna", "Soups", pageable);
+        recipeService.findByAuthorAndCategoryJPQL("anna", "Супы", pageable);
         statistics.clear();
-        recipeService.findByAuthorAndCategoryJPQL("anna", "Soups", pageable);
+        recipeService.findByAuthorAndCategoryJPQL("anna", "Супы", pageable);
         assertThat(statistics.getPrepareStatementCount()).isZero();
 
         User author = userRepository.findByUsernameIgnoreCase("anna").orElseThrow();
-        Category category = categoryRepository.findByNameIgnoreCase("Soups").orElseThrow();
+        Category category = categoryRepository.findByNameIgnoreCase("Супы").orElseThrow();
         List<Long> ingredientIds = ingredientRepository.findAll().stream()
                 .map(Ingredient::getId)
                 .limit(2)
@@ -160,7 +160,7 @@ class RecipePlatformApplicationTests {
         RecipeDto createdRecipe = recipeService.create(request);
         try {
             statistics.clear();
-            recipeService.findByAuthorAndCategoryJPQL("anna", "Soups", pageable);
+            recipeService.findByAuthorAndCategoryJPQL("anna", "Супы", pageable);
             assertThat(statistics.getPrepareStatementCount()).isGreaterThan(0L);
         } finally {
             recipeService.delete(createdRecipe.getId());
@@ -208,7 +208,7 @@ class RecipePlatformApplicationTests {
                         .content(objectMapper.writeValueAsString(List.of(firstObject, secondObject))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Ingredient with id " + Long.MAX_VALUE + " was not found"));
+                .andExpect(jsonPath("$.message").value("One or more ingredients were not found (Ingredient with id " + Long.MAX_VALUE + " was not found)"));
 
         assertThat(recipeRepository.existsByTitleIgnoreCase(firstObject.getTitle())).isFalse();
     }
@@ -225,7 +225,7 @@ class RecipePlatformApplicationTests {
                             .content(objectMapper.writeValueAsString(List.of(firstObject, secondObject))))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value(404))
-                    .andExpect(jsonPath("$.message").value("Ingredient with id " + Long.MAX_VALUE + " was not found"));
+                    .andExpect(jsonPath("$.message").value("One or more ingredients were not found (Ingredient with id " + Long.MAX_VALUE + " was not found)"));
 
             assertThat(recipeRepository.existsByTitleIgnoreCase(firstObject.getTitle())).isTrue();
         } finally {
@@ -305,7 +305,7 @@ class RecipePlatformApplicationTests {
 
     private RecipeCreateDto bulkRequest(String title) {
         User author = userRepository.findByUsernameIgnoreCase("anna").orElseThrow();
-        Category category = categoryRepository.findByNameIgnoreCase("Soups").orElseThrow();
+        Category category = categoryRepository.findByNameIgnoreCase("Супы").orElseThrow();
         Long ingredientId = ingredientRepository.findAll().stream()
                 .map(Ingredient::getId)
                 .findFirst()

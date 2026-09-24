@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
                 contact = @Contact(name = "Recipe Platform Team"),
                 license = @License(name = "MIT")
         ),
-        servers = @Server(url = "http://localhost:8080", description = "Local development server")
+        servers = @Server(url = "/", description = "Current server")
 )
 public class OpenApiConfig {
 }

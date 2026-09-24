@@ -15,7 +15,6 @@ body {
   line-height: 1.5;
 }
 
-/* The original interface used tiny 11–12px labels almost everywhere. */
 @layer utilities {
   .text-xs { font-size: 0.82rem; line-height: 1.35; }
   [class~="text-[10px]"] { font-size: 0.72rem; }

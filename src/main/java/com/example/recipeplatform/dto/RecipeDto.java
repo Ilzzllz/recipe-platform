@@ -19,6 +19,7 @@ public class RecipeDto {
 
     @Schema(description = "Recipe description", example = "Classic beet soup with vegetables and sour cream")
     private String description;
+    private Integer portions;
 
     @Schema(description = "Author information")
     private AuthorReferenceDto author;
@@ -27,5 +28,7 @@ public class RecipeDto {
     private CategoryReferenceDto category;
 
     private List<IngredientDto> ingredients;
+    private List<RecipeIngredientDto> recipeIngredients;
     private List<CookingStepDto> steps;
+    private NutritionSummaryDto nutrition;
 }

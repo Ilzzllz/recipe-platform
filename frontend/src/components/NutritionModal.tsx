@@ -59,7 +59,7 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
               <div>
                 <h3 className="text-base font-bold text-slate-900">Идет расчет нутриентов...</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                  Фоновый расчет сопоставляет каждый ингредиент с открытой базой продуктов.
+                  Фоновый расчет суммирует КБЖУ каждого ингредиента рецепта с учетом его количества.
                 </p>
               </div>
             </div>
@@ -127,17 +127,14 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
                     <thead>
                       <tr className="border-b border-slate-200 text-slate-400 font-medium">
                         <th className="pb-2.5">Ингредиент</th>
-                        <th className="pb-2.5 text-right">Ккал</th>
+                        <th className="pb-2.5 text-right">Ккал / 100г</th>
                         <th className="pb-2.5 text-right">Белки</th>
                         <th className="pb-2.5 text-right">Жиры</th>
                         <th className="pb-2.5 text-right">Углеводы</th>
-                        <th className="pb-2.5 text-right">Источник</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/60 text-slate-700">
                       {ingredientsList.map((item, idx) => {
-                        const isOpenFoodFacts =
-                          item.dataSource?.includes('Open Food Facts') || item.foundInOpenFoodFacts;
                         const itemFats = item.fatsGrams ?? item.fatGrams ?? 0;
 
                         return (
@@ -151,22 +148,6 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
                             <td className="py-2.5 text-right font-mono">{item.proteinsGrams} г</td>
                             <td className="py-2.5 text-right font-mono">{itemFats} г</td>
                             <td className="py-2.5 text-right font-mono">{item.carbohydratesGrams} г</td>
-                            <td className="py-2.5 text-right">
-                              <span
-                                className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                                  isOpenFoodFacts
-                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                    : 'bg-amber-100 text-amber-800 border border-amber-200'
-                                }`}
-                              >
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${
-                                    isOpenFoodFacts ? 'bg-emerald-600' : 'bg-amber-500'
-                                  }`}
-                                />
-                                {isOpenFoodFacts ? 'Открытая база' : 'Кулинарная оценка'}
-                              </span>
-                            </td>
                           </tr>
                         );
                       })}
@@ -177,13 +158,11 @@ export const NutritionModal: React.FC<NutritionModalProps> = ({
                 <div className="mt-4 p-3.5 bg-white rounded-xl border border-slate-200/80 text-xs text-slate-600 leading-relaxed space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-slate-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-                    <span>Что означают источники данных?</span>
+                    <span>Откуда берутся данные</span>
                   </div>
                   <p className="text-[11px]">
-                    <strong className="text-emerald-700">Открытая база продуктов</strong> — точные данные найдены и загружены из мировой базы продуктов.
-                  </p>
-                  <p className="text-[11px]">
-                    <strong className="text-amber-700">Кулинарная оценка</strong> — базовый расчет пищевой ценности, если продукт не найден в базе.
+                    Значения на ингредиент — это его КБЖУ на 100 г, сохраненные в карточке ингредиента.
+                    Итог по рецепту пересчитывается с учетом фактического количества и единицы измерения каждого ингредиента.
                   </p>
                 </div>
               </div>

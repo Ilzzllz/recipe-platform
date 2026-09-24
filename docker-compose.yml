@@ -1,0 +1,66 @@
+# Локальный запуск всего стека:  docker compose up --build
+# Параметры берутся из .env (скопируйте .env.example -> .env).
+name: recipe-platform
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: recipe-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-recipe_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_EXTERNAL_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: recipe-platform-backend:latest
+    container_name: recipe-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy   # старт только после pg_isready = OK
+    environment:
+      PORT: ${BACKEND_PORT:-8080}
+      DB_URL: ${DB_URL:-jdbc:postgresql://db:5432/recipe_db}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:*,http://127.0.0.1:*}
+      JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC}
+    ports:
+      - "${BACKEND_PORT:-8080}:${BACKEND_PORT:-8080}"
+    volumes:
+      - backend-logs:/app/logs
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${API_URL:-}
+    image: recipe-platform-frontend:latest
+    container_name: recipe-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:${BACKEND_PORT:-8080}
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+
+volumes:
+  pgdata:
+  backend-logs:

@@ -7,6 +7,7 @@ import com.example.recipeplatform.exception.NotFoundException;
 import com.example.recipeplatform.mapper.IngredientMapper;
 import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
+import com.example.recipeplatform.model.RecipeIngredient;
 import com.example.recipeplatform.repository.IngredientRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -193,6 +194,48 @@ class IngredientServiceTest {
         assertThat(ingredient.getRecipes()).isEmpty();
         verify(ingredientRepository).delete(ingredient);
         verify(recipeQueryCacheService).invalidateAll();
+    }
+
+    @Test
+    @DisplayName("delete should also detach quantity rows from recipes, skipping rows without a recipe")
+    void deleteShouldDetachRecipeIngredientDetails() {
+        Ingredient ingredient = new Ingredient();
+        ingredient.setId(1L);
+        Ingredient other = new Ingredient();
+        other.setId(2L);
+
+        Recipe recipe = new Recipe();
+        RecipeIngredient ownDetail = new RecipeIngredient();
+        ownDetail.setIngredient(ingredient);
+        ownDetail.setRecipe(recipe);
+        RecipeIngredient otherDetail = new RecipeIngredient();
+        otherDetail.setIngredient(other);
+        otherDetail.setRecipe(recipe);
+        recipe.setIngredients(new LinkedHashSet<>(Set.of(ingredient, other)));
+        recipe.setRecipeIngredientDetails(new java.util.ArrayList<>(java.util.List.of(ownDetail, otherDetail)));
+
+        Recipe detachedOnlyRecipe = new Recipe();
+        RecipeIngredient detailOfUnlinkedRecipe = new RecipeIngredient();
+        detailOfUnlinkedRecipe.setIngredient(ingredient);
+        detailOfUnlinkedRecipe.setRecipe(detachedOnlyRecipe);
+        detachedOnlyRecipe.setIngredients(new LinkedHashSet<>(Set.of(ingredient)));
+        detachedOnlyRecipe.setRecipeIngredientDetails(new java.util.ArrayList<>(java.util.List.of(detailOfUnlinkedRecipe)));
+        RecipeIngredient orphanDetail = new RecipeIngredient();
+        orphanDetail.setIngredient(ingredient);
+
+        ingredient.setRecipes(new LinkedHashSet<>(Set.of(recipe)));
+        ingredient.setRecipeIngredientDetails(new java.util.ArrayList<>(
+                java.util.List.of(ownDetail, detailOfUnlinkedRecipe, orphanDetail)));
+        when(ingredientRepository.findById(1L)).thenReturn(Optional.of(ingredient));
+
+        ingredientService.delete(1L);
+
+        assertThat(recipe.getIngredients()).containsExactly(other);
+        assertThat(recipe.getRecipeIngredientDetails()).containsExactly(otherDetail);
+        assertThat(detachedOnlyRecipe.getIngredients()).isEmpty();
+        assertThat(detachedOnlyRecipe.getRecipeIngredientDetails()).isEmpty();
+        assertThat(ingredient.getRecipeIngredientDetails()).isEmpty();
+        verify(ingredientRepository).delete(ingredient);
     }
 
     private IngredientCreateDto sampleIngredientDto(String name) {

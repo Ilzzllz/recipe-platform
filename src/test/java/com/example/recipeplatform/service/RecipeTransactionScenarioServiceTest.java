@@ -57,17 +57,17 @@ class RecipeTransactionScenarioServiceTest {
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).saveAndFlush(userCaptor.capture());
-        assertThat(userCaptor.getValue().getUsername()).isEqualTo("user_m1");
+        assertThat(userCaptor.getValue().getUsername()).isEqualTo("m1_user");
         assertThat(userCaptor.getValue().getBio()).isEqualTo("My bio");
 
         ArgumentCaptor<Category> catCaptor = ArgumentCaptor.forClass(Category.class);
         verify(categoryRepository).saveAndFlush(catCaptor.capture());
-        assertThat(catCaptor.getValue().getName()).isEqualTo("cat_m1");
+        assertThat(catCaptor.getValue().getName()).isEqualTo("m1_cat");
         assertThat(catCaptor.getValue().getDescription()).isEqualTo("Cat desc");
 
         ArgumentCaptor<Ingredient> ingCaptor = ArgumentCaptor.forClass(Ingredient.class);
         verify(ingredientRepository).saveAndFlush(ingCaptor.capture());
-        assertThat(ingCaptor.getValue().getName()).isEqualTo("ing_m1");
+        assertThat(ingCaptor.getValue().getName()).isEqualTo("m1_ing");
     }
 
     @Test
@@ -102,7 +102,7 @@ class RecipeTransactionScenarioServiceTest {
 
         ArgumentCaptor<Recipe> recipeCaptor = ArgumentCaptor.forClass(Recipe.class);
         verify(recipeRepository).save(recipeCaptor.capture());
-        assertThat(recipeCaptor.getValue().getTitle()).isEqualTo("rec_m3");
+        assertThat(recipeCaptor.getValue().getTitle()).isEqualTo("m3_rec");
         assertThat(recipeCaptor.getValue().getDescription()).isEqualTo("Rec desc");
     }
 

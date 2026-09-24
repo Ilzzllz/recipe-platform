@@ -3,6 +3,7 @@ package com.example.recipeplatform.mapper;
 import com.example.recipeplatform.dto.CategoryCreateDto;
 import com.example.recipeplatform.dto.CategoryDto;
 import com.example.recipeplatform.model.Category;
+import com.example.recipeplatform.util.TextNormalizer;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -29,8 +30,8 @@ public class CategoryMapper {
     }
 
     public void updateEntity(Category category, CategoryCreateDto dto) {
-        category.setName(dto.getName());
-        category.setDescription(dto.getDescription());
+        category.setName(TextNormalizer.normalize(dto.getName()));
+        category.setDescription(TextNormalizer.normalize(dto.getDescription()));
     }
 
     public List<CategoryDto> toDtoList(List<Category> categories) {

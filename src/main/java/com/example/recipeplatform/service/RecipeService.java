@@ -6,6 +6,7 @@ import com.example.recipeplatform.dto.AuthorReferenceDto;
 import com.example.recipeplatform.dto.CategoryReferenceDto;
 import com.example.recipeplatform.dto.NPlusOneDemoResponse;
 import com.example.recipeplatform.dto.RecipeCreateDto;
+import com.example.recipeplatform.dto.RecipeIngredientCreateDto;
 import com.example.recipeplatform.dto.RecipeDto;
 import com.example.recipeplatform.dto.RecipeFilterDto;
 import com.example.recipeplatform.dto.RecipeStepCreateDto;
@@ -16,12 +17,14 @@ import com.example.recipeplatform.model.Category;
 import com.example.recipeplatform.model.CookingStep;
 import com.example.recipeplatform.model.Ingredient;
 import com.example.recipeplatform.model.Recipe;
+import com.example.recipeplatform.model.RecipeIngredient;
 import com.example.recipeplatform.model.User;
 import com.example.recipeplatform.repository.CategoryRepository;
 import com.example.recipeplatform.repository.IngredientRepository;
 import com.example.recipeplatform.repository.RecipeRepository;
 import com.example.recipeplatform.repository.UserRepository;
 import com.example.recipeplatform.repository.projection.RecipeFilterProjection;
+import com.example.recipeplatform.util.TextNormalizer;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
@@ -31,6 +34,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -164,23 +170,29 @@ public class RecipeService {
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new NotFoundException(CATEGORY_WITH_ID_PREFIX + dto.getCategoryId() + NOT_FOUND_SUFFIX));
 
-        Set<Ingredient> ingredients = dto.getIngredientIds().stream()
-                .map(id -> ingredientRepository.findById(id)
-                        .orElseThrow(() -> new NotFoundException("Ingredient with id " + id + NOT_FOUND_SUFFIX)))
-                .collect(Collectors.toSet());
+        List<RecipeIngredient> recipeIngredients = mapRecipeIngredients(dto);
+        Set<Ingredient> ingredients = recipeIngredients.stream()
+                .map(RecipeIngredient::getIngredient)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Recipe recipe = new Recipe();
-        recipe.setTitle(dto.getTitle());
-        recipe.setDescription(dto.getDescription());
+        Recipe recipe = recipeMapper.toEntity(dto);
+        if (recipe == null) recipe = new Recipe();
+        if (recipe.getTitle() == null) recipe.setTitle(dto.getTitle());
+        if (recipe.getDescription() == null) recipe.setDescription(dto.getDescription());
+        recipeMapper.updateEntity(recipe, dto);
         recipe.setAuthor(author);
         recipe.setCategory(category);
         recipe.replaceIngredients(ingredients);
+        recipe.replaceRecipeIngredientDetails(recipeIngredients);
 
         List<CookingStep> steps = dto.getSteps().stream()
                 .map(stepDto -> {
-                    CookingStep step = new CookingStep();
-                    step.setStepOrder(stepDto.getStepOrder());
-                    step.setDescription(stepDto.getDescription());
+                    CookingStep step = cookingStepMapper.toEntity(stepDto);
+                    if (step == null) {
+                        step = new CookingStep();
+                        step.setStepOrder(stepDto.getStepOrder());
+                        step.setDescription(TextNormalizer.normalize(stepDto.getDescription()));
+                    }
                     return step;
                 })
                 .collect(Collectors.toList());
@@ -224,15 +236,73 @@ public class RecipeService {
                 .orElseThrow(() -> new NotFoundException(USER_WITH_ID_PREFIX + request.getAuthorId() + NOT_FOUND_SUFFIX));
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new NotFoundException(CATEGORY_WITH_ID_PREFIX + request.getCategoryId() + NOT_FOUND_SUFFIX));
-        List<Ingredient> ingredients = ingredientRepository.findAllById(request.getIngredientIds());
-        if (ingredients.size() != request.getIngredientIds().size()) {
-            throw new NotFoundException("One or more ingredients were not found");
-        }
+        List<RecipeIngredient> recipeIngredients = mapRecipeIngredients(request);
+        Set<Ingredient> ingredients = recipeIngredients.stream()
+                .map(RecipeIngredient::getIngredient)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         recipeMapper.updateEntity(recipe, request);
         recipe.setAuthor(author);
         recipe.setCategory(category);
-        recipe.replaceIngredients(new LinkedHashSet<>(ingredients));
+        recipe.replaceIngredients(ingredients);
+        recipe.replaceRecipeIngredientDetails(recipeIngredients);
         recipe.replaceSteps(mapSteps(request.getSteps()));
+    }
+
+    private List<RecipeIngredient> mapRecipeIngredients(RecipeCreateDto request) {
+        List<RecipeIngredientCreateDto> requested = request.getRecipeIngredients();
+        List<RecipeIngredient> result = new ArrayList<>();
+        if (requested != null && !requested.isEmpty()) {
+            for (RecipeIngredientCreateDto item : requested) {
+                if (item == null || item.getIngredientId() == null || item.getQuantity() == null || item.getQuantity().signum() <= 0) {
+                    throw new IllegalArgumentException("Количество каждого ингредиента должно быть больше нуля");
+                }
+                Ingredient ingredient = ingredientRepository.findById(item.getIngredientId())
+                        .orElseThrow(() -> new NotFoundException("One or more ingredients were not found"));
+                RecipeIngredient detail = new RecipeIngredient();
+                detail.setIngredient(ingredient);
+                detail.setQuantity(item.getQuantity());
+                detail.setUnit(normalizeUnit(item.getUnit()));
+                result.add(detail);
+            }
+            return result;
+        }
+        if (request.getIngredientIds() == null || request.getIngredientIds().isEmpty()) {
+            throw new NotFoundException("Recipe must contain at least one ingredient");
+        }
+        List<Ingredient> ingredients = ingredientRepository.findAllById(request.getIngredientIds());
+        if (ingredients.size() != request.getIngredientIds().size()) {
+            ingredients = request.getIngredientIds().stream()
+                    .map(id -> ingredientRepository.findById(id).orElse(null))
+                    .filter(Objects::nonNull)
+                    .toList();
+        }
+        if (ingredients.size() != request.getIngredientIds().size()) {
+            List<Ingredient> resolvedIngredients = ingredients;
+            String missingIdDetails = request.getIngredientIds().stream()
+                    .filter(id -> resolvedIngredients.stream().noneMatch(ingredient -> id.equals(ingredient.getId())))
+                    .findFirst()
+                    .map(id -> " (Ingredient with id " + id + " was not found)")
+                    .orElse("");
+            throw new NotFoundException("One or more ingredients were not found" + missingIdDetails);
+        }
+        for (Ingredient ingredient : ingredients) {
+            RecipeIngredient detail = new RecipeIngredient();
+            detail.setIngredient(ingredient);
+            detail.setQuantity(BigDecimal.valueOf(100));
+            detail.setUnit("г");
+            result.add(detail);
+        }
+        return result;
+    }
+
+    private String normalizeUnit(String unit) {
+        String normalized = unit == null ? "г" : unit.trim().toLowerCase();
+        return switch (normalized) {
+            case "g", "гр", "грамм", "грамма", "граммов" -> "г";
+            case "ml", "миллилитр", "миллилитров" -> "мл";
+            case "piece", "pieces", "pcs", "штука", "штуки" -> "шт";
+            default -> normalized;
+        };
     }
 
     private List<CookingStep> mapSteps(List<RecipeStepCreateDto> stepRequests) {

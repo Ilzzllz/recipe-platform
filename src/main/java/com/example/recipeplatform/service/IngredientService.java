@@ -77,8 +77,17 @@ public class IngredientService {
         Set<Recipe> recipes = new LinkedHashSet<>(ingredient.getRecipes());
         for (Recipe recipe : recipes) {
             recipe.getIngredients().remove(ingredient);
+            recipe.getRecipeIngredientDetails().removeIf(detail -> detail.getIngredient().getId().equals(id));
         }
+        ingredient.getRecipeIngredientDetails().forEach(detail -> {
+            Recipe recipe = detail.getRecipe();
+            if (recipe != null) {
+                recipe.getRecipeIngredientDetails().remove(detail);
+                recipe.getIngredients().remove(ingredient);
+            }
+        });
         ingredient.getRecipes().clear();
+        ingredient.getRecipeIngredientDetails().clear();
         ingredientRepository.delete(ingredient);
         recipeQueryCacheService.invalidateAll();
     }

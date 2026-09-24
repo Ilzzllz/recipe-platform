@@ -232,8 +232,8 @@ public class RecipeController {
     }
 
     @PostMapping("/{id}/nutrition-report")
-    @Operation(summary = "Start asynchronous nutrition calculation via Open Food Facts API",
-            description = "Launches a background worker (@Async / CompletableFuture) that fetches nutrition data from Open Food Facts API. Immediately returns 202 Accepted with a task ID; the task remains IN_PROGRESS for at least ten seconds so clients can poll it.")
+    @Operation(summary = "Start asynchronous nutrition calculation from stored ingredient data",
+            description = "Launches a background worker (@Async / CompletableFuture) that computes the recipe's total calories/proteins/fats/carbohydrates from each ingredient's stored per-100g values and quantity. Immediately returns 202 Accepted with a task ID; the task remains IN_PROGRESS for at least ten seconds so clients can poll it.")
     public ResponseEntity<AsyncTaskResponseDto> startNutritionReport(
             @Parameter(description = "Recipe ID", example = "1")
             @PathVariable Long id) {

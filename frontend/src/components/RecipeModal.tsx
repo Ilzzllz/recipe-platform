@@ -24,6 +24,7 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
   if (!recipe) return null;
 
   const sortedSteps = [...(recipe.steps || [])].sort((a, b) => a.stepOrder - b.stepOrder);
+  const recipeIngredients = recipe.recipeIngredients || (recipe.ingredients || []).map((ingredient) => ({ ingredient, quantity: 100, unit: 'г' }));
 
   const toggleStepCompleted = (index: number) => {
     setCompletedStepIds((prev) =>
@@ -81,14 +82,14 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
             </div>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              {recipe.ingredients && recipe.ingredients.length > 0 ? (
-                recipe.ingredients.map((ingredient) => (
+                {recipeIngredients.length > 0 ? (
+                recipeIngredients.map((item) => (
                   <span
-                    key={ingredient.id}
+                    key={item.ingredient.id}
                     className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl bg-white text-emerald-900 border border-emerald-200 shadow-xs"
                   >
                     <Carrot className="w-3 h-3 text-emerald-600" />
-                    {ingredient.name}
+                    {item.ingredient.name} · {item.quantity} {item.unit}
                   </span>
                 ))
               ) : (
@@ -176,7 +177,7 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                     Пищевая ценность и калорийность (КБЖУ)
                   </h4>
                   <p className="text-xs text-purple-700">
-                    Асинхронный расчет нутриентов по открытой базе продуктов
+                    Расчёт пищевой ценности по составу блюда
                   </p>
                 </div>
               </div>
@@ -249,32 +250,19 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                           <thead>
                             <tr className="border-b border-slate-100 text-slate-400 font-medium">
                               <th className="pb-2">Ингредиент</th>
-                              <th className="pb-2 text-right">Ккал</th>
+                              <th className="pb-2 text-right">Ккал / 100г</th>
                               <th className="pb-2 text-right">Белки</th>
                               <th className="pb-2 text-right">Жиры</th>
                               <th className="pb-2 text-right">Углеводы</th>
-                              <th className="pb-2 text-right">Источник</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 text-slate-700">
                             {ingredientsList.map((item, i) => {
                               const itemFats = item.fatsGrams ?? item.fatGrams ?? 0;
-                              const isOpenFoodFacts =
-                                item.dataSource?.includes('Open Food Facts') || item.foundInOpenFoodFacts;
 
                               return (
                                 <tr key={i} className="hover:bg-slate-50/50">
                                   <td className="py-2.5 flex items-center gap-2">
-                                    <span
-                                      className={`w-2 h-2 rounded-full ${
-                                        isOpenFoodFacts ? 'bg-emerald-500' : 'bg-amber-400'
-                                      }`}
-                                      title={
-                                        isOpenFoodFacts
-                                          ? 'Найдено в открытой базе продуктов'
-                                          : 'Кулинарная оценка'
-                                      }
-                                    />
                                     <span className="font-medium text-slate-800">
                                       {item.ingredientName}
                                     </span>
@@ -285,26 +273,11 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({
                                   <td className="py-2.5 text-right">{item.proteinsGrams} г</td>
                                   <td className="py-2.5 text-right">{itemFats} г</td>
                                   <td className="py-2.5 text-right">{item.carbohydratesGrams} г</td>
-                                  <td className="py-2.5 text-right text-[10px] text-slate-400">
-                                    {isOpenFoodFacts ? 'Открытая база' : 'Оценка'}
-                                  </td>
                                 </tr>
                               );
                             })}
                           </tbody>
                         </table>
-                      </div>
-
-                      <div className="p-3 bg-white rounded-xl border border-purple-100 text-xs text-slate-600 leading-relaxed space-y-1">
-                        <span className="font-bold text-slate-800 text-[11px] block">
-                          Что означают источники данных?
-                        </span>
-                        <p className="text-[11px]">
-                          <strong className="text-emerald-700">Открытая база продуктов</strong> — точные данные найдены в мировой базе продуктов.
-                        </p>
-                        <p className="text-[11px]">
-                          <strong className="text-amber-700">Кулинарная оценка</strong> — базовый расчет, который используется, если продукт не найден в базе.
-                        </p>
                       </div>
                     </div>
                   );

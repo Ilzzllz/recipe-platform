@@ -35,18 +35,18 @@ public class RecipeTransactionScenarioService {
 
     public void saveWithoutTransactional(TransactionTestRequestDto dto, String marker) {
         User user = new User();
-        user.setUsername(dto.getUserUsername() + "_" + marker);
+        user.setUsername(marker + "_" + dto.getUserUsername());
         user.setEmail(dto.getUserEmail() + "_" + marker + "@demo.local");
         user.setBio(dto.getUserBio() != null ? dto.getUserBio() : "Created for transaction demo (no tx)");
         userRepository.saveAndFlush(user);
 
         Category category = new Category();
-        category.setName(dto.getCategoryName() + "_" + marker);
+        category.setName(marker + "_" + dto.getCategoryName());
         category.setDescription(dto.getCategoryDescription() != null ? dto.getCategoryDescription() : "Created for transaction demo (no tx)");
         categoryRepository.saveAndFlush(category);
 
         Ingredient ingredient = new Ingredient();
-        ingredient.setName(dto.getIngredientName() + "_" + marker);
+        ingredient.setName(marker + "_" + dto.getIngredientName());
         ingredientRepository.saveAndFlush(ingredient);
 
         throw new TransactionDemoException("Without @Transactional", marker,
@@ -56,22 +56,22 @@ public class RecipeTransactionScenarioService {
     @Transactional
     public void saveWithTransactional(TransactionTestRequestDto dto, String marker) {
         User user = new User();
-        user.setUsername(dto.getUserUsername() + "_" + marker);
+        user.setUsername(marker + "_" + dto.getUserUsername());
         user.setEmail(dto.getUserEmail() + "_" + marker + "@demo.local");
         user.setBio(dto.getUserBio() != null ? dto.getUserBio() : "Created for transaction demo (with tx)");
         userRepository.save(user);
 
         Category category = new Category();
-        category.setName(dto.getCategoryName() + "_" + marker);
+        category.setName(marker + "_" + dto.getCategoryName());
         category.setDescription(dto.getCategoryDescription() != null ? dto.getCategoryDescription() : "Created for transaction demo (with tx)");
         categoryRepository.save(category);
 
         Ingredient ingredient = new Ingredient();
-        ingredient.setName(dto.getIngredientName() + "_" + marker);
+        ingredient.setName(marker + "_" + dto.getIngredientName());
         ingredientRepository.save(ingredient);
 
         Recipe recipe = new Recipe();
-        recipe.setTitle(dto.getRecipeTitle() + "_" + marker);
+        recipe.setTitle(marker + "_" + dto.getRecipeTitle());
         recipe.setDescription(dto.getRecipeDescription() != null ? dto.getRecipeDescription() : "This recipe will be rolled back");
         recipe.setAuthor(user);
         recipe.setCategory(category);

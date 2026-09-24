@@ -1,11 +1,10 @@
 import React from 'react';
-import { UtensilsCrossed, Layers, RefreshCw, Plus } from 'lucide-react';
+import { UtensilsCrossed, Layers, RefreshCw } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'recipes' | 'data';
   setActiveTab: (tab: 'recipes' | 'data') => void;
   onRefresh: () => void;
-  onOpenCreateModal: () => void;
   isLoading: boolean;
 }
 
@@ -13,7 +12,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   onRefresh,
-  onOpenCreateModal,
   isLoading,
 }) => {
   return (
@@ -71,14 +69,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="p-2.5 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-orange-500' : ''}`} />
-            </button>
-
-            <button
-              onClick={onOpenCreateModal}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm font-bold rounded-xl transition-colors shadow-xs"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Новый рецепт</span>
             </button>
           </div>
         </div>

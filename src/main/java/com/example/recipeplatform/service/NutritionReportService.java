@@ -40,7 +40,7 @@ public class NutritionReportService {
         task.setTaskId(taskId);
         task.setStatus(AsyncTaskStatus.IN_PROGRESS);
         task.setStartedAt(LocalDateTime.now(Clock.systemDefaultZone()));
-        task.setMessage("Fetching nutrition data from Open Food Facts API for "
+        task.setMessage("Calculating nutrition from stored ingredient data for "
                 + recipe.getIngredients().size() + " ingredients...");
         taskStore.put(taskId, task);
 
@@ -57,11 +57,6 @@ public class NutritionReportService {
         return snapshot(task);
     }
 
-    /**
-     * Returns the task state for the polling endpoint. A new task is deliberately
-     * reported as IN_PROGRESS on its first poll, so a client can reliably observe
-     * the asynchronous state transition before receiving the result.
-     */
     public AsyncTaskResponseDto pollTaskStatus(UUID taskId) {
         AsyncTaskResponseDto task = taskStore.get(taskId);
         if (task == null) {

@@ -29,17 +29,16 @@ export class ApiError extends Error {
   }
 }
 
-// Technical identifiers are useful in logs but should never leak into the
-// Russian interface. Keep server diagnostics intact in the network tab while
-// presenting a neutral message to the user.
 function hideTechnicalIds(message: string): string {
   return message
     .replace(/\b(?:recipe|category|ingredient|user)\s+with\s+id\s+\d+\s+was\s+not\s+found\b/gi, 'Выбранный объект не найден')
     .replace(/\b(?:id|ид)\s*[#№:]?\s*\d+\b/gi, 'указанный объект');
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   const headers = new Headers(options?.headers || {});
   if (!headers.has('Content-Type') && options?.body && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
@@ -84,6 +83,11 @@ export const api = {
     request<void>(`/api/recipes/${id}`, {
       method: 'DELETE',
     }),
+  createRecipesBulk: (payload: RecipeCreatePayload[]) =>
+    request<Recipe[]>('/api/recipes/bulk', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   filterRecipesJPQL: (authorUsername: string, categoryName: string, page = 0, size = 10) =>
     request<RecipeFilterPage>(
@@ -110,10 +114,10 @@ export const api = {
     }),
 
   getIngredients: () => request<Ingredient[]>('/api/ingredients'),
-  createIngredient: (name: string) =>
+  createIngredient: (name: string, nutrition?: Partial<Ingredient>) =>
     request<Ingredient>('/api/ingredients', {
       method: 'POST',
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, ...nutrition }),
     }),
   deleteIngredient: (id: number) =>
     request<void>(`/api/ingredients/${id}`, {

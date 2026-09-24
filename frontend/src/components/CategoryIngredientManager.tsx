@@ -22,6 +22,7 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
   const [newCatName, setNewCatName] = useState('');
   const [newCatDesc, setNewCatDesc] = useState('');
   const [newIngName, setNewIngName] = useState('');
+  const [newIngNutrition, setNewIngNutrition] = useState({ caloriesPer100g: '', proteinsPer100g: '', fatsPer100g: '', carbohydratesPer100g: '' });
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
 
@@ -83,8 +84,14 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
     }
     try {
       setIsLoading(true);
-      await api.createIngredient(newIngName.trim());
+      await api.createIngredient(newIngName.trim(), {
+        caloriesPer100g: Number(newIngNutrition.caloriesPer100g || 0),
+        proteinsPer100g: Number(newIngNutrition.proteinsPer100g || 0),
+        fatsPer100g: Number(newIngNutrition.fatsPer100g || 0),
+        carbohydratesPer100g: Number(newIngNutrition.carbohydratesPer100g || 0),
+      });
       setNewIngName('');
+      setNewIngNutrition({ caloriesPer100g: '', proteinsPer100g: '', fatsPer100g: '', carbohydratesPer100g: '' });
       onToast('success', 'Ингредиент успешно добавлен');
       onRefresh();
     } catch (err: unknown) {
@@ -219,6 +226,9 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
                 placeholder="Новый ингредиент (напр: Оливковое масло)..."
                 className="w-full text-sm px-3.5 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"
               />
+              <div className="grid grid-cols-2 gap-2">
+                {([['caloriesPer100g', 'Ккал / 100 г'], ['proteinsPer100g', 'Белки / 100 г'], ['fatsPer100g', 'Жиры / 100 г'], ['carbohydratesPer100g', 'Углеводы / 100 г']] as const).map(([field, label]) => <input key={field} type="number" min="0" step="0.01" value={newIngNutrition[field]} onChange={(e) => setNewIngNutrition((prev) => ({ ...prev, [field]: e.target.value }))} placeholder={label} className="w-full text-sm px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50" />)}
+              </div>
               <button
                 type="submit"
                 disabled={isLoading}
@@ -235,7 +245,7 @@ export const CategoryIngredientManager: React.FC<CategoryIngredientManagerProps>
                   key={i.id}
                   className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 text-sm"
                 >
-                  <span className="font-semibold text-slate-800">{i.name}</span>
+                  <div><span className="font-semibold text-slate-800">{i.name}</span><span className="block text-xs text-slate-500 mt-0.5">{i.caloriesPer100g ?? 0} ккал · Б {i.proteinsPer100g ?? 0} · Ж {i.fatsPer100g ?? 0} · У {i.carbohydratesPer100g ?? 0} на 100 г</span></div>
                   <button
                     onClick={() =>
                       setDeleteTarget({ type: 'ingredient', id: i.id, name: i.name })

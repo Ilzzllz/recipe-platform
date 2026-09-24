@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { api, ApiError } from './api/client';
-import { Recipe, Category, Ingredient, User, RecipeCreatePayload, NutritionReportTask, Toast, RecipeFilterPage } from './types';
+import { Recipe, Category, Ingredient, User, RecipeCreatePayload, NutritionReportTask, Toast } from './types';
 import { Navbar } from './components/Navbar';
 import { RecipeCard } from './components/RecipeCard';
 import { RecipeModal } from './components/RecipeModal';
@@ -9,7 +9,8 @@ import { CategoryIngredientManager } from './components/CategoryIngredientManage
 import { ConfirmModal } from './components/ConfirmModal';
 import { ToastContainer } from './components/ToastContainer';
 import { NutritionModal } from './components/NutritionModal';
-import { Plus, Search, Filter, BookOpen, Layers, ChefHat, Carrot, X, SlidersHorizontal, ChevronLeft, ChevronRight, Database } from 'lucide-react';
+import { Plus, Search, Filter, BookOpen, Layers, ChefHat, Carrot, X, ChevronLeft, ChevronRight, ListPlus } from 'lucide-react';
+import { BulkRecipeModal } from './components/BulkRecipeModal';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'recipes' | 'data'>('recipes');
@@ -20,18 +21,19 @@ export const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [caloriesMin, setCaloriesMin] = useState('');
+  const [caloriesMax, setCaloriesMax] = useState('');
+  const [proteinsMin, setProteinsMin] = useState('');
+  const [proteinsMax, setProteinsMax] = useState('');
+  const [fatsMin, setFatsMin] = useState('');
+  const [fatsMax, setFatsMax] = useState('');
+  const [carbsMin, setCarbsMin] = useState('');
+  const [carbsMax, setCarbsMax] = useState('');
   const [recipePage, setRecipePage] = useState(0);
   const recipePageSize = 6;
-
-  // The backend already contains JPQL and native SQL queries with Pageable.
-  // Keep them accessible from the UI so the feature is useful, not hidden in Swagger.
-  const [advancedAuthor, setAdvancedAuthor] = useState('');
-  const [advancedCategory, setAdvancedCategory] = useState('');
-  const [advancedQueryMode, setAdvancedQueryMode] = useState<'jpql' | 'native'>('jpql');
-  const [advancedResults, setAdvancedResults] = useState<RecipeFilterPage | null>(null);
-  const [advancedPage, setAdvancedPage] = useState(0);
-  const [advancedLoading, setAdvancedLoading] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -50,6 +52,7 @@ export const App: React.FC = () => {
   }, []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [nutritionRecipe, setNutritionRecipe] = useState<Recipe | null>(null);
@@ -88,69 +91,28 @@ export const App: React.FC = () => {
     };
   }, [loadData]);
 
-  useEffect(() => {
-    if (!advancedAuthor && users.length > 0) setAdvancedAuthor(users[0].username);
-    if (!advancedCategory && categories.length > 0) setAdvancedCategory(categories[0].name);
-  }, [users, categories, advancedAuthor, advancedCategory]);
-
-  const handleSearchSubmit = async (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) {
-      setRecipePage(0);
-      loadData();
-      return;
-    }
-    try {
-      setIsLoading(true);
-      const results = await api.searchRecipesByTitle(searchQuery.trim());
-      setRecipes(results);
-      setRecipePage(0);
-      if (results.length === 0) {
-        addToast('info', `По запросу "${searchQuery}" ничего не найдено`);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Ошибка при выполнении поиска';
-      addToast('error', msg, 'Поиск не удался');
-    } finally {
-      setIsLoading(false);
-    }
+    setAppliedSearch(searchQuery.trim());
+    setRecipePage(0);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
+    setAppliedSearch('');
+    setSelectedAuthors([]);
+    setSelectedCategories([]);
+    setCaloriesMin('');
+    setCaloriesMax('');
+    setProteinsMin('');
+    setProteinsMax('');
+    setFatsMin('');
+    setFatsMax('');
+    setCarbsMin('');
+    setCarbsMax('');
     setRecipePage(0);
-    loadData();
   };
 
-  const runAdvancedQuery = async (page = 0) => {
-    if (!advancedAuthor || !advancedCategory) {
-      addToast('warning', 'Выберите автора и категорию для расширенного запроса');
-      return;
-    }
-    try {
-      setAdvancedLoading(true);
-      const result = advancedQueryMode === 'jpql'
-        ? await api.filterRecipesJPQL(advancedAuthor, advancedCategory, page, 5)
-        : await api.filterRecipesNative(advancedAuthor, advancedCategory, page, 5);
-      setAdvancedResults(result);
-      setAdvancedPage(page);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Не удалось выполнить расширенный запрос';
-      addToast('error', msg, 'Ошибка запроса');
-    } finally {
-      setAdvancedLoading(false);
-    }
-  };
-
-  const openAdvancedRecipe = async (recipeId: number) => {
-    try {
-      const fullRecipe = await api.getRecipeById(recipeId);
-      setViewingRecipe(fullRecipe);
-      setNutritionTask(null);
-    } catch (err: unknown) {
-      addToast('error', err instanceof Error ? err.message : 'Не удалось открыть рецепт');
-    }
-  };
 
   const handleViewRecipe = async (recipe: Recipe) => {
     try {
@@ -203,6 +165,18 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleSubmitBulk = async (payload: RecipeCreatePayload[]) => {
+    try {
+      const created = await api.createRecipesBulk(payload);
+      setRecipes((prev) => [...created, ...prev]);
+      setIsBulkOpen(false);
+      addToast('success', `Добавлено рецептов: ${created.length}`);
+    } catch (error: unknown) {
+      addToast('error', error instanceof Error ? error.message : 'Не удалось добавить рецепты', 'Ошибка массового добавления');
+      throw error;
+    }
+  };
+
   const handleCalculateNutrition = async (recipe: Recipe) => {
     try {
       setIsPollingNutrition(true);
@@ -242,11 +216,30 @@ export const App: React.FC = () => {
     handleCalculateNutrition(recipe);
   };
 
-  const filteredRecipes = recipes.filter((r) => {
-    if (selectedCategoryFilter !== 'ALL') {
-      return r.category?.name === selectedCategoryFilter;
-    }
+  const inRange = (value: number | undefined, min: string, max: string) => {
+    const actual = value ?? 0;
+    if (min !== '' && actual < Number(min)) return false;
+    if (max !== '' && actual > Number(max)) return false;
     return true;
+  };
+
+  const filteredRecipes = recipes.filter((r) => {
+    const titleMatches = !appliedSearch || r.title.toLocaleLowerCase().includes(appliedSearch.toLocaleLowerCase());
+    const authorMatches = selectedAuthors.length === 0 || selectedAuthors.includes(r.author?.username || '');
+    const categoryMatches = selectedCategories.length === 0 || selectedCategories.includes(r.category?.name || '');
+    const caloriesMatch = inRange(r.nutrition?.caloriesPerPortion, caloriesMin, caloriesMax);
+    const proteinsMatch = inRange(r.nutrition?.proteinsPerPortion, proteinsMin, proteinsMax);
+    const fatsMatch = inRange(r.nutrition?.fatsPerPortion, fatsMin, fatsMax);
+    const carbsMatch = inRange(r.nutrition?.carbohydratesPerPortion, carbsMin, carbsMax);
+    return (
+      titleMatches &&
+      authorMatches &&
+      categoryMatches &&
+      caloriesMatch &&
+      proteinsMatch &&
+      fatsMatch &&
+      carbsMatch
+    );
   });
   const totalRecipePages = Math.max(1, Math.ceil(filteredRecipes.length / recipePageSize));
   const visibleRecipes = filteredRecipes.slice(recipePage * recipePageSize, (recipePage + 1) * recipePageSize);
@@ -257,10 +250,6 @@ export const App: React.FC = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onRefresh={loadData}
-        onOpenCreateModal={() => {
-          setEditingRecipe(null);
-          setIsFormOpen(true);
-        }}
         isLoading={isLoading}
       />
 
@@ -309,181 +298,56 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-              <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+              <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Поиск рецептов по названию блюда..."
-                    className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/50"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={handleClearSearch}
-                      className="p-1 text-slate-400 hover:text-slate-600 absolute right-2.5 top-1/2 -translate-y-1/2"
-                      title="Очистить поиск"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
+                  <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Найти блюдо по названию" className="w-full pl-11 pr-10 py-3 text-base rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/50" />
+                  {searchQuery && <button type="button" onClick={() => setSearchQuery('')} className="p-1 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2"><X className="w-5 h-5" /></button>}
                 </div>
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold rounded-2xl transition-colors"
-                >
-                  Найти
-                </button>
+                <button type="submit" className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white text-base font-bold rounded-2xl">Найти</button>
+                <button type="button" onClick={handleClearSearch} className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-base font-semibold rounded-2xl">Сбросить</button>
               </form>
-
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs text-slate-600">
-                  <Filter className="w-3.5 h-3.5 text-slate-400" />
-                  <select
-                    value={selectedCategoryFilter}
-                    onChange={(e) => {
-                      setSelectedCategoryFilter(e.target.value);
-                      setRecipePage(0);
-                    }}
-                    className="bg-transparent focus:outline-none font-semibold text-slate-700 cursor-pointer"
-                  >
-                    <option value="ALL">Все категории</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setEditingRecipe(null);
-                    setIsFormOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm font-bold rounded-2xl transition-colors shadow-xs"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Создать</span>
-                </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="space-y-1.5"><span className="flex items-center gap-2 text-base font-semibold text-slate-700"><Filter className="w-4 h-4" />Авторы</span><select multiple value={selectedAuthors} onChange={(e) => { setSelectedAuthors(Array.from(e.target.selectedOptions, (option) => option.value)); setRecipePage(0); }} className="w-full min-h-24 px-3 py-2 rounded-2xl border border-slate-200 bg-slate-50/70 text-base focus:outline-none focus:ring-2 focus:ring-orange-500">{users.map((user) => <option key={user.id} value={user.username}>{user.username}</option>)}</select><span className="text-sm text-slate-500">Можно выбрать несколько авторов</span></label>
+                <label className="space-y-1.5"><span className="flex items-center gap-2 text-base font-semibold text-slate-700"><Filter className="w-4 h-4" />Категории</span><select multiple value={selectedCategories} onChange={(e) => { setSelectedCategories(Array.from(e.target.selectedOptions, (option) => option.value)); setRecipePage(0); }} className="w-full min-h-24 px-3 py-2 rounded-2xl border border-slate-200 bg-slate-50/70 text-base focus:outline-none focus:ring-2 focus:ring-orange-500">{categories.map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}</select><span className="text-sm text-slate-500">Можно выбрать несколько категорий</span></label>
               </div>
+              <div className="space-y-2">
+                <span className="flex items-center gap-2 text-base font-semibold text-slate-700"><Filter className="w-4 h-4" />КБЖУ на порцию</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-slate-500">Калории, ккал</span>
+                    <div className="flex items-center gap-1.5">
+                      <input type="number" min={0} value={caloriesMin} onChange={(e) => { setCaloriesMin(e.target.value); setRecipePage(0); }} placeholder="от" className="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                      <input type="number" min={0} value={caloriesMax} onChange={(e) => { setCaloriesMax(e.target.value); setRecipePage(0); }} placeholder="до" className="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-slate-500">Белки, г</span>
+                    <div className="flex items-center gap-1.5">
+                      <input type="number" min={0} value={proteinsMin} onChange={(e) => { setProteinsMin(e.target.value); setRecipePage(0); }} placeholder="от" className="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                      <input type="number" min={0} value={proteinsMax} onChange={(e) => { setProteinsMax(e.target.value); setRecipePage(0); }} placeholder="до" className="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-slate-500">Жиры, г</span>
+                    <div className="flex items-center gap-1.5">
+                      <input type="number" min={0} value={fatsMin} onChange={(e) => { setFatsMin(e.target.value); setRecipePage(0); }} placeholder="от" className="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                      <input type="number" min={0} value={fatsMax} onChange={(e) => { setFatsMax(e.target.value); setRecipePage(0); }} placeholder="до" className="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-slate-500">Углеводы, г</span>
+                    <div className="flex items-center gap-1.5">
+                      <input type="number" min={0} value={carbsMin} onChange={(e) => { setCarbsMin(e.target.value); setRecipePage(0); }} placeholder="от" className="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                      <input type="number" min={0} value={carbsMax} onChange={(e) => { setCarbsMax(e.target.value); setRecipePage(0); }} placeholder="до" className="w-full px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3"><button type="button" onClick={() => { setEditingRecipe(null); setIsFormOpen(true); }} className="inline-flex items-center gap-2 px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white text-base font-bold rounded-2xl"><Plus className="w-5 h-5" />Создать рецепт</button><button type="button" onClick={() => setIsBulkOpen(true)} className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-base font-bold rounded-2xl"><ListPlus className="w-5 h-5" />Добавить несколько</button></div>
             </div>
 
-            <section className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600">
-                    <SlidersHorizontal className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-slate-900">Расширенный поиск</h2>
-                    <p className="text-sm text-slate-500 mt-0.5">
-                      Сложный запрос к связанным таблицам авторов и категорий с серверной пагинацией
-                    </p>
-                  </div>
-                </div>
-                <div className="inline-flex rounded-xl bg-slate-100 p-1 self-start lg:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setAdvancedQueryMode('jpql')}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${advancedQueryMode === 'jpql' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}
-                  >
-                    JPQL
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAdvancedQueryMode('native')}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${advancedQueryMode === 'native' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}
-                  >
-                    SQL
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3">
-                <label className="space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">Автор</span>
-                  <select
-                    value={advancedAuthor}
-                    onChange={(e) => setAdvancedAuthor(e.target.value)}
-                    className="w-full px-3.5 py-3 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Выберите автора</option>
-                    {users.map((u) => <option key={u.id} value={u.username}>{u.username}</option>)}
-                  </select>
-                </label>
-                <label className="space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">Категория</span>
-                  <select
-                    value={advancedCategory}
-                    onChange={(e) => setAdvancedCategory(e.target.value)}
-                    className="w-full px-3.5 py-3 rounded-xl border border-slate-200 bg-slate-50/70 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Выберите категорию</option>
-                    {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => runAdvancedQuery(0)}
-                  disabled={advancedLoading}
-                  className="self-end inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors disabled:opacity-50"
-                >
-                  <Database className="w-4 h-4" />
-                  {advancedLoading ? 'Выполняем…' : 'Выполнить запрос'}
-                </button>
-              </div>
-
-              {advancedResults && (
-                <div className="mt-5 border-t border-slate-100 pt-4">
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <h3 className="text-base font-bold text-slate-900">Результаты запроса</h3>
-                    <span className="text-sm text-slate-500">Найдено: {advancedResults.totalElements}</span>
-                  </div>
-                  {advancedResults.content.length === 0 ? (
-                    <p className="text-sm text-slate-500 py-3">Для выбранных условий рецептов нет.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {advancedResults.content.map((item) => (
-                        <button
-                          type="button"
-                          key={item.recipeId}
-                          onClick={() => openAdvancedRecipe(item.recipeId)}
-                          className="w-full text-left p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-200 transition-colors"
-                        >
-                          <span className="block text-base font-bold text-slate-900">{item.recipeTitle}</span>
-                          <span className="block text-sm text-slate-600 mt-1 line-clamp-2">{item.recipeDescription}</span>
-                          <span className="block text-sm text-indigo-700 mt-2">Автор: {item.authorUsername} · {item.categoryName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {advancedResults.totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-3 mt-4">
-                      <button
-                        type="button"
-                        onClick={() => runAdvancedQuery(advancedPage - 1)}
-                        disabled={advancedPage === 0 || advancedLoading}
-                        className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold disabled:opacity-40 hover:bg-slate-50"
-                      >
-                        <ChevronLeft className="w-4 h-4" /> Назад
-                      </button>
-                      <span className="text-sm font-semibold text-slate-600">Страница {advancedPage + 1} из {advancedResults.totalPages}</span>
-                      <button
-                        type="button"
-                        onClick={() => runAdvancedQuery(advancedPage + 1)}
-                        disabled={advancedPage >= advancedResults.totalPages - 1 || advancedLoading}
-                        className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold disabled:opacity-40 hover:bg-slate-50"
-                      >
-                        Вперёд <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </section>
 
             {isLoading && recipes.length === 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
@@ -592,6 +456,15 @@ export const App: React.FC = () => {
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleSubmitRecipe}
         initialRecipe={editingRecipe}
+        categories={categories}
+        ingredients={ingredients}
+        users={users}
+      />
+
+      <BulkRecipeModal
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        onSubmit={handleSubmitBulk}
         categories={categories}
         ingredients={ingredients}
         users={users}

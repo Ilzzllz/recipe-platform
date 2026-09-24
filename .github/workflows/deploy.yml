@@ -1,0 +1,223 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "20"
+
+jobs:
+  # ================= 1. build: backend jar + SPA + Docker images =================
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Build backend (compile + package, tests run in the next stage)
+        run: |
+          chmod +x mvnw
+          ./mvnw -B package -DskipTests -Djacoco.skip=true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend (tsc + vite)
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      - name: Build PaaS image (SPA + API, used by Render)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.render
+          push: false
+          cache-from: type=gha,scope=render
+          cache-to: type=gha,mode=max,scope=render
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            target/*.jar
+            frontend/dist
+          retention-days: 7
+
+  # ================= 2. test: JUnit 5 / Mockito / @SpringBootTest + JaCoCo 100% services =================
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: recipe_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d recipe_db"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/recipe_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      RUN_DB_TESTS: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Run tests and coverage check
+        run: |
+          chmod +x mvnw
+          ./mvnw -B verify
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import os, xml.etree.ElementTree as ET
+          path = "target/site/jacoco/jacoco.xml"
+          if not os.path.exists(path):
+              print("JaCoCo report not found"); raise SystemExit
+          root = ET.parse(path).getroot()
+          print("### JaCoCo coverage: package `service`\n")
+          print("| Counter | Covered | Total | % |\n|---|---|---|---|")
+          for pkg in root.findall("package"):
+              if pkg.get("name") == "com/example/recipeplatform/service":
+                  for c in pkg.findall("counter"):
+                      cov, miss = int(c.get("covered")), int(c.get("missed"))
+                      print(f"| {c.get('type')} | {cov} | {cov + miss} | {100 * cov / (cov + miss):.0f}% |")
+          PY
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/site/jacoco/
+          retention-days: 7
+
+  # ================= 3. deploy: trigger Render deploy hook =================
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    outputs:
+      enabled: ${{ steps.config.outputs.enabled }}
+    steps:
+      - name: Check deploy configuration
+        id: config
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          if [ -z "$HOOK" ] || [ -z "$APP_URL" ]; then
+            echo "::warning::Деплой пропущен: задайте secret RENDER_DEPLOY_HOOK и variable APP_URL (см. README -> Деплой на Render)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger Render deploy
+        if: steps.config.outputs.enabled == 'true'
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          curl -fsS -X POST "${HOOK}&ref=${GITHUB_SHA}" -o /dev/null
+          echo "Render deploy triggered for ${GITHUB_SHA}"
+
+  # ================= 4. healthcheck: wait for /actuator/health = UP + smoke test =================
+  healthcheck:
+    name: healthcheck
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: needs.deploy.outputs.enabled == 'true'
+    timeout-minutes: 30
+    steps:
+      - name: Wait for /actuator/health
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          URL="${APP_URL%/}/actuator/health"
+          echo "Waiting for $URL"
+          sleep 90
+          for i in $(seq 1 70); do
+            BODY=$(curl -s --max-time 30 "$URL" || true)
+            if echo "$BODY" | grep -q '"status":"UP"'; then
+              echo "Application is healthy (attempt $i): $BODY"
+              exit 0
+            fi
+            echo "Attempt $i/70: not ready yet (${BODY:-no response})"
+            sleep 20
+          done
+          echo "::error::Healthcheck failed: $URL"
+          exit 1
+
+      - name: Smoke test SPA and API
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          curl -fsS --max-time 30 "${APP_URL%/}/" | grep -q "<div id=\"root\">"
+          curl -fsS --max-time 30 "${APP_URL%/}/api/categories" | head -c 300; echo

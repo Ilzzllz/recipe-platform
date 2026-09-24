@@ -3,6 +3,7 @@ package com.example.recipeplatform.mapper;
 import com.example.recipeplatform.dto.UserCreateDto;
 import com.example.recipeplatform.dto.UserDto;
 import com.example.recipeplatform.model.User;
+import com.example.recipeplatform.util.TextNormalizer;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,9 +31,9 @@ public class UserMapper {
     }
 
     public void updateEntity(User user, UserCreateDto dto) {
-        user.setUsername(dto.getUsername());
+        user.setUsername(TextNormalizer.normalize(dto.getUsername()));
         user.setEmail(dto.getEmail());
-        user.setBio(dto.getBio());
+        user.setBio(TextNormalizer.normalize(dto.getBio()));
     }
 
     public List<UserDto> toDtoList(List<User> users) {

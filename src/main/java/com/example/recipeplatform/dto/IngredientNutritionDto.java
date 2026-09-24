@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Nutritional details of a single ingredient fetched from open food database")
+@Schema(description = "Nutritional details of a single ingredient, taken from its stored per-100g values")
 public class IngredientNutritionDto {
 
     @Schema(description = "Ingredient name", example = "Tomato")
@@ -28,6 +28,6 @@ public class IngredientNutritionDto {
     @Schema(description = "Carbohydrates per 100g (g)", example = "3.9")
     private double carbohydratesGrams;
 
-    @Schema(description = "Data source indicator", example = "Open Food Facts API")
+    @Schema(description = "Data source indicator", example = "Ingredient nutrition data stored in the recipe_platform database")
     private String dataSource;
 }

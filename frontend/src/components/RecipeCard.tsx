@@ -25,7 +25,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             <Tag className="w-3 h-3" />
             {recipe.category?.name || 'Без категории'}
           </span>
-          <span className="text-xs text-slate-400">Карточка блюда</span>
         </div>
 
         <h3
