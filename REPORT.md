@@ -13,6 +13,8 @@
 | Нагрузочный тест JMeter | 1000 запросов, **0% ошибок**, ~524 req/s |
 | Комментарии в исходном коде (Java, SQL, TS/TSX, CSS) | удалены (оставлена только директива `/// <reference types="vite/client" />`, без неё не собирается TypeScript) |
 
+**Развёрнутое приложение (Render, free):** https://recipe-platform-sz3f.onrender.com/ — SPA, [https://recipe-platform-sz3f.onrender.com/api/recipes](https://recipe-platform-sz3f.onrender.com/api/recipes) — REST API, [https://recipe-platform-sz3f.onrender.com/actuator/health](https://recipe-platform-sz3f.onrender.com/actuator/health) — healthcheck, [https://recipe-platform-sz3f.onrender.com/swagger-ui.html](https://recipe-platform-sz3f.onrender.com/swagger-ui.html) — Swagger UI.
+
 Пути в отчёте указаны от корня проекта. Префикс `B/` означает `src/main/java/com/example/recipeplatform/`.
 
 ---
