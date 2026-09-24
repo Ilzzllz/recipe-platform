@@ -418,8 +418,10 @@ class RecipeServiceUnitTest {
         user.setId(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(2L)).thenReturn(Optional.empty());
+        RecipeCreateDto request = validRecipeRequest("Missing category soup");
+        List<RecipeCreateDto> recipes = List.of(request);
 
-        assertThatThrownBy(() -> recipeService.createBulk(List.of(validRecipeRequest("Missing category soup"))))
+        assertThatThrownBy(() -> recipeService.createBulk(recipes))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("Category with id 2 was not found");
 

@@ -12,6 +12,12 @@ class TextNormalizerTest {
     }
 
     @Test
+    void capitalizesTextAfterQuestionMark() {
+        assertThat(TextNormalizer.normalize("готово? продолжить"))
+                .isEqualTo("Готово? Продолжить");
+    }
+
+    @Test
     void keepsNullAndEmptyValuesSafe() {
         assertThat(TextNormalizer.normalize(null)).isNull();
         assertThat(TextNormalizer.normalize("  ")).isEmpty();

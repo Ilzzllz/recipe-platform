@@ -144,15 +144,18 @@ class RecipeViewCounterServiceTest {
 
     private static final class InterruptingExecutorService extends AbstractExecutorService {
         private boolean shutdown;
+        private boolean terminated;
 
         @Override
         public void shutdown() {
             shutdown = true;
+            terminated = true;
         }
 
         @Override
         public java.util.List<Runnable> shutdownNow() {
             shutdown = true;
+            terminated = true;
             return Collections.emptyList();
         }
 
@@ -163,12 +166,12 @@ class RecipeViewCounterServiceTest {
 
         @Override
         public boolean isTerminated() {
-            return shutdown;
+            return terminated;
         }
 
         @Override
         public boolean awaitTermination(long timeout, TimeUnit unit) {
-            return shutdown;
+            return terminated;
         }
 
         @Override
